@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>РодБаза</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Wix+Madefor+Text:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="container" id="container">
+    <!-- Форма регистрации -->
+    <div class="form-container sign-up-container">
+        <form action="#">
+            <h1>Создать аккаунт</h1>
+            <input type="text" placeholder="Имя" />
+            <input type="email" placeholder="Email" />
+            <input type="password" placeholder="Пароль" />
+            <button>Зарегистрироваться</button>
+        </form>
+    </div>
+    <!-- Форма входа -->
+    <div class="form-container sign-in-container">
+        <form action="#">
+            <h1>Войти</h1>
+            <input type="email" placeholder="Email" />
+            <input type="password" placeholder="Пароль" />
+            <a href="#">Забыли пароль?</a>
+            <button>Войти</button>
+        </form>
+    </div>
+    <!-- Оверлей для анимации -->
+    <div class="overlay-container">
+        <div class="overlay">
+            <div class="overlay-panel overlay-left">
+                <h1>С возвращением!</h1>
+                <p>Чтобы оставаться на связи, войдите в свой аккаунт</p>
+                <button class="ghost" id="signIn">Войти</button>
+            </div>
+            <div class="overlay-panel overlay-right">
+                <h1>Привет, Друг!</h1>
+                <p>Введите свои данные и начните ваше путешествие с нами</p>
+                <button class="ghost" id="signUp">Регистрация</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
