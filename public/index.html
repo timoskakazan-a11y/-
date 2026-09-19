@@ -1,55 +1,66 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>РодБаза</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Wix+Madefor+Text:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Метро 3D Live — Москва</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23e42313%22/><text x=%2250%22 y=%2270%22 font-size=%2260%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22Arial%22>M</text></svg>" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/vendor/three/build/three.module.js",
+        "three/addons/": "/vendor/three/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 <body>
+  <div id="app">
+    <canvas id="gl" class="pixelated"></canvas>
 
-<div class="container" id="container">
-    <!-- Форма регистрации -->
-    <div class="form-container sign-up-container">
-        <form action="#">
-            <h1>Создать аккаунт</h1>
-            <input type="text" placeholder="Имя" />
-            <input type="email" placeholder="Email" />
-            <input type="password" placeholder="Пароль" />
-            <button>Зарегистрироваться</button>
-        </form>
-    </div>
-    <!-- Форма входа -->
-    <div class="form-container sign-in-container">
-        <form action="#">
-            <h1>Войти</h1>
-            <input type="email" placeholder="Email" />
-            <input type="password" placeholder="Пароль" />
-            <a href="#">Забыли пароль?</a>
-            <button>Войти</button>
-        </form>
-    </div>
-    <!-- Оверлей для анимации -->
-    <div class="overlay-container">
-        <div class="overlay">
-            <div class="overlay-panel overlay-left">
-                <h1>С возвращением!</h1>
-                <p>Чтобы оставаться на связи, войдите в свой аккаунт</p>
-                <button class="ghost" id="signIn">Войти</button>
-            </div>
-            <div class="overlay-panel overlay-right">
-                <h1>Привет, Друг!</h1>
-                <p>Введите свои данные и начните ваше путешествие с нами</p>
-                <button class="ghost" id="signUp">Регистрация</button>
-            </div>
+    <div id="hud">
+      <div id="hud-top">
+        <div class="brand">🚇 МЕТРО 3D LIVE</div>
+        <div id="clock-box">
+          <span id="clock">05:30:00</span>
+          <div id="speed-controls">
+            <button data-speed="1">×1</button>
+            <button data-speed="10">×10</button>
+            <button data-speed="60">×60</button>
+            <button data-speed="300">×300</button>
+          </div>
         </div>
+      </div>
+
+      <div id="legend-panel">
+        <div id="legend-title">Линии <span id="legend-toggle">▾</span></div>
+        <div id="legend-list"></div>
+      </div>
+
+      <div id="info-panel" class="hidden">
+        <button id="info-close">✕</button>
+        <div id="info-content"></div>
+      </div>
+
+      <div id="follow-banner" class="hidden">
+        <span id="follow-text"></span>
+        <button id="follow-stop">Отменить слежение</button>
+      </div>
+
+      <div id="stats">
+        <span id="train-count">0</span> поездов на линии
+      </div>
+
+      <div id="help-hint">ЛКМ — вращать · колесо — масштаб · клик по станции/поезду — инфо</div>
     </div>
-</div>
 
-<script src="script.js"></script>
+    <div id="loading">
+      <div class="loading-title">Инициализация схемы метрополитена…</div>
+      <div class="loading-bar"><div class="loading-bar-fill" id="loading-fill"></div></div>
+    </div>
+  </div>
 
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

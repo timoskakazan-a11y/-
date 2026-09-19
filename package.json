@@ -1,0 +1,16 @@
+{
+  "name": "moscow-metro-3d-live",
+  "version": "1.0.0",
+  "description": "Real-time 3D pixel-art map of the Moscow Metro with schedule-driven train simulation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}
