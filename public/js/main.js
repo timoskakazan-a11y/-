@@ -8,7 +8,7 @@ import { buildWorld, setupLights } from './scene.js';
 import { TrainPool } from './trains3d.js';
 import { UI } from './ui.js';
 
-const PIXEL_DIVISOR = 4.2; // ниже -> крупнее "пиксели"
+const PIXEL_DIVISOR = 3.2; // ниже -> крупнее "пиксели"
 
 async function bootstrap() {
   const loadingFill = document.getElementById('loading-fill');
@@ -55,15 +55,18 @@ async function bootstrap() {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
 
+  const DEFAULT_CAM_POS = new THREE.Vector3(0, 150, 190);
+  const DEFAULT_TARGET = new THREE.Vector3(0, 0, 0);
+
   const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 3000);
-  camera.position.set(0, 190, 160);
+  camera.position.copy(DEFAULT_CAM_POS);
   camera.lookAt(0, 0, 0);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.target.set(0, 0, 0);
-  controls.maxPolarAngle = Math.PI / 2.15;
+  controls.maxPolarAngle = Math.PI * 0.49; // почти горизонтальный вид для платформенной камеры
   controls.minPolarAngle = 0.15;
-  controls.minDistance = 25;
+  controls.minDistance = 4;
   controls.maxDistance = 750;
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
@@ -76,6 +79,9 @@ async function bootstrap() {
     simSeconds: 5 * 3600 + 30 * 60,
     lastFrameTime: performance.now(),
     followTrainId: null,
+    watchStationInfo: null,
+    autoFollow: false,
+    flight: null,
     hiddenLines: new Set(),
   };
 
@@ -140,17 +146,55 @@ async function bootstrap() {
         const owners = stationToLines.get(name) || [];
         const lm = owners[0];
         const stationIndex = lm.stations.indexOf(name);
-        ui.showStationInfo(lm, stationIndex, name, state.simSeconds, owners);
+        ui.showStationInfo(lm, stationIndex, name, state.simSeconds, owners, () =>
+          watchStation(name, lm, stationIndex)
+        );
       }
     }
   });
 
-  function followTrain(id) {
+  function followTrain(id, label) {
     state.followTrainId = id;
-    ui.setFollowing(`поезд ${id.split('-')[0]}`);
+    state.watchStationInfo = null;
+    state.autoFollow = false;
+    ui.setFollowing(label || `поезд ${id.split('-')[0]}`);
   }
+
+  // Статичный кинематографический вид с платформы вдоль пути (используется, пока поезд не в кадре)
+  function flyToPlatform(stationInfo) {
+    const { pos, dx, dz } = stationInfo;
+    const camHeight = 6.5;
+    const backAlong = 11;
+    const camPos = new THREE.Vector3(pos.x - dx * backAlong, camHeight, pos.z - dz * backAlong);
+    const lookTarget = new THREE.Vector3(pos.x + dx * 26, 1.3, pos.z + dz * 26);
+    state.flight = { camPos, targetPos: lookTarget };
+  }
+
+  // Наблюдение за станцией: статичный вид платформы, который переключается на слежение
+  // за поездом, когда тот подходит к этой станции - так видно, как поезд прибывает и тормозит.
+  function watchStation(name, lineModel, stationIndex) {
+    const group = stationGroups.get(name);
+    if (!group) return;
+    const positions = lineModel.positions;
+    const prev = positions[Math.max(0, stationIndex - 1)];
+    const next = positions[Math.min(positions.length - 1, stationIndex + 1)];
+    let dx = next.x - prev.x;
+    let dz = next.z - prev.z;
+    const len = Math.hypot(dx, dz) || 1;
+    dx /= len;
+    dz /= len;
+    const pos = group.position;
+    const stationInfo = { name, lineId: lineModel.id, stationIndex, pos: { x: pos.x, z: pos.z }, dx, dz };
+    state.watchStationInfo = stationInfo;
+    state.followTrainId = null;
+    flyToPlatform(stationInfo);
+    ui.setFollowing(`платформа: ${name}`);
+  }
+
   function stopFollow() {
     state.followTrainId = null;
+    state.watchStationInfo = null;
+    state.flight = { camPos: DEFAULT_CAM_POS.clone(), targetPos: DEFAULT_TARGET.clone() };
     ui.setFollowing(null);
   }
 
@@ -167,16 +211,60 @@ async function bootstrap() {
     const visibleTrains = activeTrains.filter((t) => !state.hiddenLines.has(t.lineId));
     trainPool.sync(visibleTrains);
 
+    const applyFlightLerp = () => {
+      if (!state.flight) return;
+      camera.position.lerp(state.flight.camPos, 0.1);
+      controls.target.lerp(state.flight.targetPos, 0.1);
+      if (camera.position.distanceTo(state.flight.camPos) < 0.5) state.flight = null;
+    };
+
     if (state.followTrainId) {
       const root = trainPool.getRootById(state.followTrainId);
-      if (root) {
-        const targetPos = new THREE.Vector3(root.position.x, root.position.y, root.position.z);
-        controls.target.lerp(targetPos, 0.12);
-        const desired = targetPos.clone().add(new THREE.Vector3(0, 70, 70));
-        camera.position.lerp(desired, 0.06);
+      const followedTrain = visibleTrains.find((t) => t.id === state.followTrainId);
+      if (root && followedTrain) {
+        // низкая близкая камера сбоку от поезда - видно, как он идёт и тормозит
+        const from = followedTrain.dirPositions[followedTrain.headingFrom];
+        const to = followedTrain.dirPositions[followedTrain.headingTo];
+        let dx = to.x - from.x;
+        let dz = to.z - from.z;
+        const len = Math.hypot(dx, dz) || 1;
+        dx /= len;
+        dz /= len;
+        const perpX = -dz;
+        const perpZ = dx;
+        const targetPos = new THREE.Vector3(root.position.x, 1.2, root.position.z);
+        controls.target.lerp(targetPos, 0.15);
+        const desired = new THREE.Vector3(
+          root.position.x + perpX * 7 - dx * 3,
+          5.5,
+          root.position.z + perpZ * 7 - dz * 3
+        );
+        camera.position.lerp(desired, 0.08);
+      } else if (state.autoFollow && state.watchStationInfo) {
+        // поезд ушёл дальше по линии - возвращаемся к статичному виду платформы
+        const info = state.watchStationInfo;
+        state.followTrainId = null;
+        state.autoFollow = false;
+        flyToPlatform(info);
+        ui.setFollowing(`платформа: ${info.name}`);
       } else {
         stopFollow();
       }
+    } else if (state.watchStationInfo) {
+      // ищем поезд этой линии рядом со станцией - когда появится, переключаемся на слежение за ним
+      const info = state.watchStationInfo;
+      const candidate = visibleTrains.find(
+        (t) => t.lineId === info.lineId && Math.hypot(t.x - info.pos.x, t.z - info.pos.z) < 24
+      );
+      if (candidate) {
+        state.followTrainId = candidate.id;
+        state.autoFollow = true;
+        ui.setFollowing(`платформа: ${info.name} — поезд прибывает`);
+      } else {
+        applyFlightLerp();
+      }
+    } else {
+      applyFlightLerp();
     }
 
     controls.update();

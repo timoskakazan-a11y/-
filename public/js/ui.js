@@ -96,7 +96,7 @@ export class UI {
     this.trainCountEl.textContent = n;
   }
 
-  showStationInfo(lineModel, stationIndex, stationName, simSeconds, interchangeLines) {
+  showStationInfo(lineModel, stationIndex, stationName, simSeconds, interchangeLines, onWatch) {
     const arrivals = upcomingArrivals(lineModel, stationIndex, simSeconds, 5);
     const rows = arrivals
       .map((a) => `<div class="arrival-row"><span>${a.dir === lineModel.directions[0] ? '→ прямое' : '← обратное'}</span><span>${fmtEta(a.etaSeconds)}</span></div>`)
@@ -110,10 +110,13 @@ export class UI {
       <h3>${stationName}</h3>
       <div style="font-size:12px;color:${lineModel.color};font-weight:700;margin-bottom:4px;">${lineModel.name}</div>
       ${interchangeHtml}
+      <button id="watch-station-btn" class="watch-btn">🎥 Смотреть с платформы</button>
       <div style="margin-top:8px;font-size:12px;color:#9fb0c0;">Ближайшие поезда:</div>
       ${rows}
     `;
     this.infoPanel.classList.remove('hidden');
+    const btn = document.getElementById('watch-station-btn');
+    if (btn && onWatch) btn.addEventListener('click', onWatch);
   }
 
   showTrainInfo(train, lineModel) {

@@ -183,6 +183,24 @@ html, body {
   font-size: 15px;
 }
 
+.watch-btn {
+  display: block;
+  width: 100%;
+  margin: 8px 0 4px;
+  background: linear-gradient(180deg, #2a3550, #1a2233);
+  border: 1px solid #4a6fa8;
+  color: #cfe4ff;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.watch-btn:hover {
+  background: linear-gradient(180deg, #33406a, #22293d);
+}
+
 #info-content .arrival-row {
   display: flex;
   justify-content: space-between;
