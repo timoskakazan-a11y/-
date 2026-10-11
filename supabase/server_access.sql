@@ -30,7 +30,8 @@ as $$
   );
 $$;
 revoke all on function public.is_server() from public;
-grant execute on function public.is_server() to anon, authenticated, service_role;
+grant execute on function public.is_server() to anon, service_role;
+revoke execute on function public.is_server() from authenticated;
 
 -- Права на таблицы даём anon, но RLS ограничивает их проверкой секрета
 grant select, insert, update, delete
@@ -66,6 +67,7 @@ end;
 $$;
 revoke all on function public.submit_form_response_checked(text, jsonb, uuid, text) from public;
 grant execute on function public.submit_form_response_checked(text, jsonb, uuid, text) to anon, service_role;
+revoke execute on function public.submit_form_response_checked(text, jsonb, uuid, text) from authenticated;
 
 -- Секрет генерируется один раз; посмотреть: select secret from private.server_secret;
 -- Его значение кладётся в Vercel как SUPABASE_SERVER_SECRET.
