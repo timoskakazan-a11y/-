@@ -407,8 +407,8 @@ details.disclose.card > summary { color: var(--blue); font-weight: 600; min-heig
 .sheet:focus-visible { box-shadow: 0 0 0 3px var(--blue-tint-2); }
 .sheet table { border-collapse: separate; border-spacing: 0; font-size: 14px; letter-spacing: -0.006em; min-width: 100%; }
 .sheet th, .sheet td { border-right: 1px solid var(--grid); border-bottom: 1px solid var(--grid); padding: 0 10px; height: 34px; white-space: nowrap; text-align: left; font-weight: 400; vertical-align: middle; }
-.sheet td.cell { min-width: 140px; max-width: 320px; overflow: hidden; text-overflow: ellipsis; cursor: cell; }
-.sheet td.cell:nth-child(2) { min-width: 150px; color: var(--label-2); font-variant-numeric: tabular-nums; }
+.sheet td.sc { min-width: 140px; max-width: 320px; overflow: hidden; text-overflow: ellipsis; cursor: cell; }
+.sheet td.sc:nth-child(2) { min-width: 150px; color: var(--label-2); font-variant-numeric: tabular-nums; }
 .sheet thead th { position: sticky; z-index: 2; background: var(--grid-head); }
 .sheet .sheet-letters th { top: 0; height: 26px; font-size: 12px; font-weight: 500; color: var(--label-2); text-align: center; }
 .sheet .sheet-letters th.on { background: var(--grid-sel); color: var(--label); }
@@ -416,8 +416,8 @@ details.disclose.card > summary { color: var(--blue); font-weight: 600; min-heig
 .sheet .rn { position: sticky; left: 0; z-index: 1; width: 46px; min-width: 46px; padding: 0 6px; text-align: center; font-size: 12px; color: var(--label-2); background: var(--grid-head); font-variant-numeric: tabular-nums; }
 .sheet thead .rn { z-index: 3; }
 .sheet .rn.on { background: var(--grid-sel); color: var(--label); }
-.sheet tbody tr:hover td.cell { background: color-mix(in srgb, var(--fill) 45%, transparent); }
-.sheet td.cell.on { box-shadow: inset 0 0 0 2px var(--blue); background: color-mix(in srgb, var(--blue-tint) 60%, transparent) !important; }
+.sheet tbody tr:hover td.sc { background: color-mix(in srgb, var(--fill) 45%, transparent); }
+.sheet td.sc.on { box-shadow: inset 0 0 0 2px var(--blue); background: color-mix(in srgb, var(--blue-tint) 60%, transparent) !important; }
 .sheet .act { width: 44px; min-width: 44px; padding: 0 4px; border-right: 0; text-align: center; }
 .sheet .sheet-del { opacity: 0; color: var(--red); }
 .sheet tr:hover .sheet-del, .sheet .sheet-del:focus-visible { opacity: 1; }

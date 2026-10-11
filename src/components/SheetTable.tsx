@@ -115,7 +115,7 @@ export function SheetTable({ labels, rows, deleteAction }: {
                     <td
                       key={c}
                       data-cell={`${r}:${c}`}
-                      className={on ? "cell on" : "cell"}
+                      className={on ? "sc on" : "sc"}
                       title={v.length > 30 ? v : undefined}
                       onClick={() => {
                         setSel({ r, c });
@@ -138,7 +138,7 @@ export function SheetTable({ labels, rows, deleteAction }: {
               </tr>
             ))}
             {visible.length === 0 && (
-              <tr><td className="rn">2</td><td className="cell muted" colSpan={columns.length}>Ничего не найдено</td><td className="act" /></tr>
+              <tr><td className="rn">2</td><td className="sc muted" colSpan={columns.length}>Ничего не найдено</td><td className="act" /></tr>
             )}
           </tbody>
         </table>
