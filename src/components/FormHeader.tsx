@@ -4,8 +4,6 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/supabase";
 import { isAccepting } from "@/lib/admin-data";
-import { toggleForm } from "@/app/admin/actions";
-import { ActionForm, SubmitButton } from "./ActionForm";
 import { Icon } from "./Icon";
 import { plural } from "./FormListItem";
 
@@ -48,30 +46,20 @@ const TABS = [
 export function FormHeader({ form, responses, active }: { form: FullForm; responses: number; active: (typeof TABS)[number]["key"] }) {
   const open = isAccepting(form, responses);
   return (
-    <>
-      <Link href="/admin/forms" className="back"><Icon name="chevronLeft" size={16} /> Формы</Link>
-      <div className="page-head" style={{ alignItems: "flex-start", marginBottom: 12 }}>
-        <h1 style={{ overflowWrap: "anywhere", fontSize: 32 }}>{form.title}</h1>
-      </div>
-      <div className="row" style={{ marginBottom: 16, gap: 10 }}>
-        {open ? <span className="pill pill-ok">принимает ответы</span> : <span className="pill">приём закрыт</span>}
-        <span className="small muted">{responses} {plural(responses, "ответ", "ответа", "ответов")}</span>
-        <span className="spacer" />
-        <ActionForm action={toggleForm} inline>
-          <input type="hidden" name="id" value={form.id} />
-          <input type="hidden" name="open" value={form.is_open ? "false" : "true"} />
-          <SubmitButton className={form.is_open ? "btn btn-secondary btn-sm" : "btn btn-primary btn-sm"} pendingText="…">
-            {form.is_open ? "Закрыть приём" : "Открыть приём"}
-          </SubmitButton>
-        </ActionForm>
+    <div className="form-head">
+      <Link href="/admin/forms" className="back"><Icon name="chevronLeft" size={20} weight={2.2} /> Формы</Link>
+      <h1 className="form-head-title">{form.title}</h1>
+      <div className="form-head-meta">
+        {open ? <span className="pill pill-ok">Принимает ответы</span> : <span className="pill">Приём закрыт</span>}
+        <span>{responses} {plural(responses, "ответ", "ответа", "ответов")}</span>
       </div>
       <nav className="segmented" aria-label="Разделы формы">
         {TABS.map((t) => (
           <Link key={t.key} href={`/admin/forms/${form.id}${t.path}`} aria-current={t.key === active ? "page" : undefined}>
-            {t.label}{t.key === "responses" && responses > 0 ? ` · ${responses}` : ""}
+            {t.label}
           </Link>
         ))}
       </nav>
-    </>
+    </div>
   );
 }

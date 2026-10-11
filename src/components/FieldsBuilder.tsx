@@ -64,79 +64,66 @@ export function FieldsBuilder({ initial, hasResponses }: { initial: FormField[];
 
       {fields.map((f, i) => (
         <div key={f.id} className="qcard">
-          <div className="qcard-head">Вопрос {i + 1}</div>
+          <div className="qcard-top">
+            <span className="qcard-head">Вопрос {i + 1}</span>
+            <select className="type-select" value={f.type} aria-label="Тип ответа" onChange={(e) => setType(i, e.target.value as FieldType)}>
+              {Object.entries(FIELD_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </div>
 
-          <input
-            className="input input-bare"
-            style={{ fontSize: "1.0625rem", fontWeight: 550 }}
+          <textarea
+            className="input-bare qcard-title"
             value={f.label}
             maxLength={LIMITS.label}
+            rows={1}
             placeholder="Текст вопроса"
             aria-label={`Текст вопроса ${i + 1}`}
-            onChange={(e) => update(i, { label: e.target.value })}
+            onChange={(e) => update(i, { label: e.target.value.replace(/\n/g, " ") })}
           />
 
-          <select className="select" value={f.type} aria-label="Тип ответа" onChange={(e) => setType(i, e.target.value as FieldType)}>
-            {Object.entries(FIELD_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-
           {withOptions(f.type) ? (
-            <div className="stack-sm">
+            <div className="opts">
               {(f.options ?? []).map((o, k) => (
                 <div key={k} className="opt">
-                  <span className="dot" style={{ borderRadius: f.type === "checkbox" ? 4 : f.type === "radio" ? "50%" : 2 }} />
+                  <span className={`opt-mark ${f.type === "checkbox" ? "sq" : ""}`} aria-hidden />
                   <input
-                    className="input"
-                    style={{ minHeight: 40, padding: "8px 10px" }}
+                    className="input-bare opt-input"
                     value={o}
                     maxLength={LIMITS.option}
+                    placeholder={`Вариант ${k + 1}`}
                     aria-label={`Вариант ${k + 1}`}
                     onChange={(e) => setOption(i, k, e.target.value)}
                   />
-                  <button type="button" className="btn btn-ghost btn-icon" onClick={() => removeOption(i, k)} aria-label="Удалить вариант" title="Удалить вариант">
-                    <Icon name="x" size={18} />
+                  <button type="button" className="opt-remove" onClick={() => removeOption(i, k)} aria-label="Удалить вариант" title="Удалить вариант">
+                    <Icon name="x" size={14} weight={2.6} />
                   </button>
                 </div>
               ))}
-              <button type="button" className="btn btn-ghost btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => addOption(i)}>
-                <Icon name="plus" size={16} /> Добавить вариант
+              <button type="button" className="opt opt-add" onClick={() => addOption(i)} disabled={(f.options ?? []).length >= LIMITS.options}>
+                <span className="opt-mark add" aria-hidden><Icon name="plus" size={14} weight={2.6} /></span>
+                Добавить вариант
               </button>
             </div>
           ) : (
-            <details className="disclose">
-              <summary className="xs muted">Подсказка и ограничение длины</summary>
-              <div className="stack-sm" style={{ marginTop: 10 }}>
-                <input className="input" value={f.placeholder ?? ""} maxLength={200} placeholder="Подсказка внутри поля" onChange={(e) => update(i, { placeholder: e.target.value })} />
-                <input
-                  className="input"
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={f.type === "textarea" ? LIMITS.textarea : LIMITS.text}
-                  value={f.maxLength ?? ""}
-                  placeholder={`Максимум символов (по умолчанию ${f.type === "textarea" ? LIMITS.textarea : LIMITS.text})`}
-                  onChange={(e) => update(i, { maxLength: e.target.value ? Math.max(1, Number(e.target.value)) : undefined })}
-                />
-              </div>
-            </details>
+            <div className="answer-preview">{f.type === "textarea" ? "Развёрнутый ответ…" : "Короткий ответ…"}</div>
           )}
 
           <div className="qcard-foot">
-            <label className="switch" style={{ gap: 10 }}>
+            <label className="switch" style={{ gap: 10, justifyContent: "flex-start" }}>
               <input type="checkbox" checked={f.required} onChange={(e) => update(i, { required: e.target.checked })} />
               <span className="track" />
-              <span className="small">Обязательный</span>
+              <span style={{ fontSize: 15 }}>Обязательный</span>
             </label>
             <span className="spacer" />
-            <button type="button" className="btn btn-ghost btn-icon" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Выше" title="Выше"><Icon name="up" size={18} /></button>
-            <button type="button" className="btn btn-ghost btn-icon" onClick={() => move(i, 1)} disabled={i === fields.length - 1} aria-label="Ниже" title="Ниже"><Icon name="down" size={18} /></button>
-            <button type="button" className="btn btn-ghost btn-icon" style={{ color: "var(--err)" }} onClick={() => remove(i)} aria-label="Удалить вопрос" title="Удалить вопрос"><Icon name="trash" size={18} /></button>
+            <button type="button" className="icon-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Выше" title="Выше"><Icon name="up" size={20} /></button>
+            <button type="button" className="icon-btn" onClick={() => move(i, 1)} disabled={i === fields.length - 1} aria-label="Ниже" title="Ниже"><Icon name="down" size={20} /></button>
+            <button type="button" className="icon-btn danger" onClick={() => remove(i)} aria-label="Удалить вопрос" title="Удалить вопрос"><Icon name="trash" size={19} /></button>
           </div>
         </div>
       ))}
 
-      <button type="button" className="btn btn-secondary btn-lg" onClick={add} disabled={fields.length >= LIMITS.fields}>
-        <Icon name="plus" size={18} /> Добавить вопрос
+      <button type="button" className="add-question" onClick={add} disabled={fields.length >= LIMITS.fields}>
+        <Icon name="plus" size={18} weight={2.4} /> Добавить вопрос
       </button>
     </div>
   );

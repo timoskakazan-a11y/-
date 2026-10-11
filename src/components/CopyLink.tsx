@@ -8,12 +8,18 @@ export function CopyLink({ url, title }: { url: string; title: string }) {
   useEffect(() => setCanShare(typeof navigator !== "undefined" && "share" in navigator), []);
 
   return (
-    <div className="share">
-      <div className="share-url">{url}</div>
-      <div className="row">
+    <div className="list">
+      <div className="cell cell-inline">
+        <span className="share-link truncate">{url.replace(/^https?:\/\//, "")}</span>
+        <a className="btn btn-ghost btn-sm btn-icon" href={url} target="_blank" rel="noopener noreferrer" title="Открыть" aria-label="Открыть форму">
+          <Icon name="external" size={18} />
+        </a>
+      </div>
+      <div className="cell" style={{ gap: 8, paddingTop: 10, paddingBottom: 12 }}>
         <button
           type="button"
           className="btn btn-secondary btn-sm"
+          style={{ flex: 1 }}
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(url);
@@ -22,16 +28,13 @@ export function CopyLink({ url, title }: { url: string; title: string }) {
             } catch {}
           }}
         >
-          <Icon name={copied ? "check" : "copy"} size={16} /> {copied ? "Скопировано" : "Копировать"}
+          <Icon name={copied ? "check" : "copy"} size={16} /> {copied ? "Скопировано" : "Скопировать"}
         </button>
         {canShare && (
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => navigator.share({ title, url }).catch(() => {})}>
+          <button type="button" className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => navigator.share({ title, url }).catch(() => {})}>
             <Icon name="share" size={16} /> Поделиться
           </button>
         )}
-        <a className="btn btn-ghost btn-sm" href={url} target="_blank" rel="noopener noreferrer">
-          <Icon name="external" size={16} /> Открыть
-        </a>
       </div>
     </div>
   );

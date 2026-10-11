@@ -10,10 +10,10 @@ type Props = {
   resetOnSuccess?: boolean;
   className?: string;
   style?: React.CSSProperties;
-  /** Компактная форма в одну строку (кнопка удаления и т.п.) — сообщение об успехе не показываем */
+  /** Компактная форма (кнопка удаления и т.п.) — сообщение об успехе не показываем */
   inline?: boolean;
-  /** Липкая панель сохранения внизу экрана с этой кнопкой */
-  sticky?: React.ReactNode;
+  /** Панель сохранения сверху (как «Готово» в iOS) с этой подписью кнопки */
+  saveBar?: string;
 };
 
 const Pending = createContext(false);
@@ -22,20 +22,30 @@ const Pending = createContext(false);
  * Форма админки. Отправляем вручную (а не через form action), чтобы
  * React не очищал поля после отправки: при ошибке введённое сохраняется.
  */
-export function ActionForm({ action, children, confirm, resetOnSuccess, className, style, inline, sticky }: Props) {
+export function ActionForm({ action, children, confirm, resetOnSuccess, className, style, inline, saveBar }: Props) {
   const [state, run, pending] = useActionState(action, null);
   const [visible, setVisible] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const ref = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (!state) return;
     setVisible(true);
-    if (state.ok && resetOnSuccess) ref.current?.reset();
     if (state.ok) {
+      setDirty(false);
+      if (resetOnSuccess) ref.current?.reset();
       const t = setTimeout(() => setVisible(false), 2500);
       return () => clearTimeout(t);
     }
   }, [state, resetOnSuccess]);
+
+  // предупреждение при уходе со страницы с несохранёнными изменениями
+  useEffect(() => {
+    if (!saveBar || !dirty) return;
+    const h = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", h);
+    return () => window.removeEventListener("beforeunload", h);
+  }, [dirty, saveBar]);
 
   const msg = visible && state?.message && !(inline && state.ok) ? (
     <div className={`alert ${state.ok ? "alert-ok" : "alert-err"}`} role={state.ok ? "status" : "alert"}>
@@ -48,6 +58,8 @@ export function ActionForm({ action, children, confirm, resetOnSuccess, classNam
       ref={ref}
       className={className}
       style={style}
+      onInput={() => saveBar && setDirty(true)}
+      onChange={() => saveBar && setDirty(true)}
       onSubmit={(e) => {
         e.preventDefault();
         if (pending) return;
@@ -57,15 +69,16 @@ export function ActionForm({ action, children, confirm, resetOnSuccess, classNam
       }}
     >
       <Pending.Provider value={pending}>
-        {children}
-        {sticky ? (
-          <div className="sticky-save" style={{ marginTop: 16 }}>
-            {msg ?? <span className="spacer" />}
-            <SubmitButton className="btn btn-primary">{sticky}</SubmitButton>
+        {saveBar && (
+          <div className="savebar">
+            <span className="savebar-status">
+              {msg ?? (dirty ? <span className="savebar-dirty">Есть несохранённые изменения</span> : <span className="tertiary">Все изменения сохранены</span>)}
+            </span>
+            <SubmitButton className={dirty ? "btn btn-primary btn-sm" : "btn btn-sm"}>{saveBar}</SubmitButton>
           </div>
-        ) : (
-          msg && <div style={{ marginTop: inline ? 6 : 12 }}>{msg}</div>
         )}
+        {children}
+        {!saveBar && msg && <div style={{ marginTop: inline ? 6 : 12 }}>{msg}</div>}
       </Pending.Provider>
     </form>
   );
