@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getPublicForm } from "@/lib/data";
 import { FormClient } from "./FormClient";
 import { RetryButton } from "@/components/RetryButton";
+import { Icon } from "@/components/Icon";
 
 export const dynamic = "force-dynamic";
 
@@ -26,17 +27,19 @@ export default async function FormPage({ params }: Props) {
     <div className="fx-page"><div className="container narrow" style={{ maxWidth: 600 }}>
       {r.status === "ok" && <FormClient form={r.form} />}
       {r.status === "closed" && (
-        <div className="fx-card fx-done">
-          <h1 style={{ fontSize: 28 }}>{r.title}</h1>
-          <p className="muted" style={{ margin: "8px 0 28px" }}>Приём ответов на эту форму закрыт</p>
-          <Link href="/" className="btn btn-secondary">На главную</Link>
+        <div className="fx-hero tile-lilac fx-done">
+          <span className="fx-done-icon"><Icon name="lock" size={30} weight={2.6} /></span>
+          <h1 className="fx-title">{r.title}</h1>
+          <p className="fx-desc">Приём ответов на эту форму закрыт</p>
+          <div className="fx-done-actions"><Link href="/" className="fx-glass-chip">На главную</Link></div>
         </div>
       )}
       {r.status === "error" && (
-        <div className="fx-card fx-done">
-          <h1 style={{ fontSize: 28 }}>Не удалось загрузить форму</h1>
-          <p className="muted" style={{ margin: "8px 0 28px" }}>Похоже, сбой связи. Попробуйте обновить страницу.</p>
-          <RetryButton />
+        <div className="fx-hero tile-pink fx-done">
+          <span className="fx-done-icon"><Icon name="x" size={30} weight={2.8} /></span>
+          <h1 className="fx-title">Не удалось загрузить форму</h1>
+          <p className="fx-desc">Похоже, сбой связи. Попробуйте обновить страницу.</p>
+          <div className="fx-done-actions"><RetryButton /></div>
         </div>
       )}
     </div></div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { maxLen, validateAnswers, type Answers, type FormField, type PublicForm } from "@/lib/forms";
-import { Icon } from "@/components/Icon";
+import { Icon, type IconName } from "@/components/Icon";
 
 type Phase = "idle" | "sending" | "retrying" | "offline" | "done";
 
@@ -137,33 +137,38 @@ export function FormClient({ form }: { form: PublicForm }) {
     setPhase("idle");
   }
 
+  const tile = tileFor(form.slug);
+  const icon: IconName = /песн|дискот|музык|трек|плейл/i.test(form.title) ? "music" : /фото|сним|видео/i.test(form.title) ? "camera" : "asterisk";
+
   if (phase === "done") {
     return (
-      <div className="fx-card fx-done" role="status">
-        <div className="fx-done-icon"><Icon name="check" size={30} weight={2.6} /></div>
-        <h1 className="fx-title" style={{ textAlign: "center" }}>{form.success_text}</h1>
-        <p className="fx-desc" style={{ textAlign: "center" }}>{form.title}</p>
-        <button className="fx-submit fx-submit-ghost" onClick={again}>Отправить ещё один ответ</button>
+      <div className={`fx-hero ${tile} fx-done`} role="status">
+        <span className="fx-done-icon"><Icon name="check" size={34} weight={3} /></span>
+        <h1 className="fx-title">{form.success_text}</h1>
+        <p className="fx-desc">{form.title}</p>
+        <div className="fx-done-actions"><button className="fx-glass-chip" onClick={again}>Отправить ещё один ответ</button></div>
       </div>
     );
   }
 
   const busy = phase === "sending" || phase === "retrying" || phase === "offline";
-  const hasAnswers = Object.values(answers).some((v) => (Array.isArray(v) ? v.length : v));
+  const filled = (v: string | string[] | undefined) => (Array.isArray(v) ? v.length > 0 : !!v && v.trim() !== "");
+  const done = form.fields.filter((f) => filled(answers[f.id])).length;
+  const hasAnswers = done > 0;
 
   return (
-    <form onSubmit={onSubmit} noValidate className="fx-card">
-      <div className="fx-bar">
-        <span className="fx-bar-item"><Icon name="lock" size={15} /> Анонимно</span>
-        {hasAnswers && !busy && (
-          <button type="button" className="fx-bar-item fx-bar-btn" onClick={again}>
-            <Icon name="eraser" size={16} /> Очистить
-          </button>
-        )}
-      </div>
-
-      <h1 className="fx-title">{form.title}</h1>
-      {form.description && <p className="fx-desc">{form.description}</p>}
+    <form onSubmit={onSubmit} noValidate className="fx-form">
+      <header className={`fx-hero ${tile}`}>
+        <div className="fx-hero-top">
+          <span className="fx-glass-chip"><Icon name="lock" size={14} weight={2.2} /> Анонимно</span>
+          {hasAnswers && !busy && (
+            <button type="button" className="fx-glass-chip" onClick={again}><Icon name="eraser" size={15} weight={2.2} /> Очистить</button>
+          )}
+        </div>
+        <h1 className="fx-title">{form.title}</h1>
+        {form.description && <p className="fx-desc">{form.description}</p>}
+        <span className="fx-hero-icon" aria-hidden><Icon name={icon} size={56} weight={3} /></span>
+      </header>
 
       {/* Скрытое поле-ловушка для ботов */}
       <div className="visually-hidden" aria-hidden>
@@ -174,24 +179,40 @@ export function FormClient({ form }: { form: PublicForm }) {
       </div>
 
       <div className="fx-fields">
-        {form.fields.map((f) => (
-          <Field key={f.id} field={f} value={answers[f.id]} error={errors[f.id]} onChange={(v) => set(f.id, v)} disabled={busy} />
+        {form.fields.map((f, i) => (
+          <Field key={f.id} n={i + 1} field={f} value={answers[f.id]} error={errors[f.id]} onChange={(v) => set(f.id, v)} disabled={busy} />
         ))}
       </div>
 
-      {message && <div className="alert alert-err" role="alert" style={{ marginTop: 20 }}>{message}</div>}
-      {phase === "retrying" && <div className="alert alert-info" style={{ marginTop: 20 }}>Связь нестабильна — пробуем отправить ещё раз…</div>}
-      {phase === "offline" && <div className="alert alert-info" style={{ marginTop: 20 }}>Нет интернета. Ответ отправится сам, когда связь появится.</div>}
-
-      <button type="submit" className="fx-submit" disabled={busy}>
-        {busy ? "Отправляем…" : "Отправить"}
-      </button>
+      {message && <div className="alert alert-err" role="alert" style={{ marginTop: 16 }}>{message}</div>}
+      {phase === "retrying" && <div className="alert alert-info" style={{ marginTop: 16 }}>Связь нестабильна — пробуем отправить ещё раз…</div>}
+      {phase === "offline" && <div className="alert alert-info" style={{ marginTop: 16 }}>Нет интернета. Ответ отправится сам, когда связь появится.</div>}
       <p className="fx-note">Имя и IP-адрес не сохраняются</p>
+
+      <div className="fx-dock">
+        <div className="fx-dock-inner">
+          <div className="fx-progress" aria-live="polite">
+            <span className="fx-progress-num">{done}<span> / {form.fields.length}</span></span>
+            <span className="fx-progress-bar"><i style={{ width: `${(done / Math.max(1, form.fields.length)) * 100}%` }} /></span>
+          </div>
+          <button type="submit" className="fx-submit" disabled={busy}>
+            {busy ? "Отправляем…" : "Отправить"}
+          </button>
+        </div>
+      </div>
     </form>
   );
 }
 
-function Field({ field: f, value, error, onChange, disabled }: {
+const TILES = ["tile-yellow", "tile-sky", "tile-lilac", "tile-pink", "tile-mint", "tile-blue"];
+function tileFor(slug: string) {
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
+  return TILES[h % TILES.length];
+}
+
+function Field({ n, field: f, value, error, onChange, disabled }: {
+  n: number;
   field: FormField;
   value: string | string[] | undefined;
   error?: string;
@@ -201,27 +222,30 @@ function Field({ field: f, value, error, onChange, disabled }: {
   const id = `f-${f.id}`;
   const errId = `${id}-err`;
   const str = typeof value === "string" ? value : "";
-  const legend = (
-    <span className="fx-legend">
-      {f.label}
-      {f.required && <span className="req" aria-hidden>*</span>}
-    </span>
-  );
+  const head = (forId?: string) => {
+    const Tag = forId ? "label" : "div";
+    return (
+      <Tag className="fx-q-head" {...(forId ? { htmlFor: forId } : {})}>
+        <span className="fx-q-title">{f.label}</span>
+        <span className="fx-q-num">{n}</span>
+        {f.required && <span className="fx-q-req">обязательно</span>}
+      </Tag>
+    );
+  };
   const err = error ? <div id={errId} className="fx-error">{error}</div> : null;
   const aria = {
     "aria-invalid": error ? true : undefined,
     "aria-describedby": error ? errId : undefined,
     "aria-required": f.required || undefined,
   };
+  const cls = `fx-q${error ? " invalid" : ""}`;
 
-  // текст: поле с рамкой и подписью, врезанной в рамку
   if (f.type === "text" || f.type === "textarea") {
     const limit = maxLen(f);
     return (
-      <div className="fx-item">
-        <label className={`fx-box${error ? " invalid" : ""}`} htmlFor={id}>
-          <span className="fx-main">
-          {legend}
+      <div className={cls}>
+        {head(id)}
+        <div className="fx-field">
           {f.type === "text" ? (
             <input id={id} {...aria} disabled={disabled} className="fx-input" value={str} maxLength={limit}
               placeholder={f.placeholder ?? "Ваш ответ"} onChange={(e) => onChange(e.target.value)} />
@@ -229,32 +253,23 @@ function Field({ field: f, value, error, onChange, disabled }: {
             <textarea id={id} {...aria} disabled={disabled} className="fx-input fx-textarea" value={str} maxLength={limit}
               placeholder={f.placeholder ?? "Ваш ответ"} onChange={(e) => onChange(e.target.value)} />
           )}
-          </span>
           {str && !disabled && (
-            <button type="button" className="fx-clear" onClick={(e) => { e.preventDefault(); onChange(""); }} aria-label="Очистить поле"><Icon name="x" size={14} weight={2.6} /></button>
+            <button type="button" className="fx-clear" onClick={() => onChange("")} aria-label="Очистить поле"><Icon name="x" size={13} weight={2.8} /></button>
           )}
-        </label>
+        </div>
         {str.length > limit * 0.8 && <div className="counter">{str.length} / {limit}</div>}
         {err}
       </div>
     );
   }
 
-  // выпадающий список: выбранное значение — чипсом, нативный выбор поверх
   if (f.type === "select") {
     return (
-      <div className="fx-item">
-        <div className={`fx-box fx-select${error ? " invalid" : ""}`}>
-          <span className="fx-main">
-            {legend}
-            <span className="fx-value">
-              {str ? <span className="fx-tag">{str}</span> : <span className="fx-placeholder">Выберите</span>}
-            </span>
-          </span>
-          {str && !disabled && (
-            <button type="button" className="fx-clear" onClick={() => onChange("")} aria-label="Сбросить выбор"><Icon name="x" size={14} weight={2.6} /></button>
-          )}
-          <span className="fx-chevron" aria-hidden><Icon name="down" size={18} /></span>
+      <div className={cls}>
+        {head(id)}
+        <div className="fx-field fx-select">
+          {str ? <span className="fx-tag">{str}</span> : <span className="fx-placeholder">Выберите</span>}
+          <span className="fx-chevron" aria-hidden><Icon name="down" size={18} weight={2.2} /></span>
           <select id={id} {...aria} disabled={disabled} className="fx-native" value={str} onChange={(e) => onChange(e.target.value)}>
             <option value="">Выберите</option>
             {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -265,16 +280,13 @@ function Field({ field: f, value, error, onChange, disabled }: {
     );
   }
 
-  // варианты: контурные капсулы, выбранные — голубые с галочкой
   const multi = f.type === "checkbox";
   const arr = Array.isArray(value) ? value : [];
   return (
-    <fieldset id={id} className={`fx-item fx-group${error ? " invalid" : ""}`} aria-describedby={error ? errId : undefined} tabIndex={-1}>
-      <legend className="fx-group-label">
-        {f.label}
-        {f.required && <span className="req" aria-hidden>*</span>}
-        {multi && <span className="fx-hint"> · можно несколько</span>}
-      </legend>
+    <fieldset id={id} className={cls} aria-describedby={error ? errId : undefined} tabIndex={-1}>
+      <legend className="visually-hidden">{f.label}</legend>
+      {head()}
+      {multi && <p className="fx-hint">Можно выбрать несколько</p>}
       <div className="fx-pills">
         {f.options?.map((o) => {
           const checked = multi ? arr.includes(o) : str === o;
@@ -282,7 +294,7 @@ function Field({ field: f, value, error, onChange, disabled }: {
             <label key={o} className={`fx-pill${checked ? " on" : ""}`}>
               <input type={multi ? "checkbox" : "radio"} name={f.id} value={o} disabled={disabled} checked={checked}
                 onChange={(e) => (multi ? onChange(e.target.checked ? [...arr, o] : arr.filter((x) => x !== o)) : onChange(o))} />
-              {checked && <Icon name="check" size={16} weight={2.6} />}
+              {checked && <Icon name="check" size={15} weight={2.8} />}
               <span>{o}</span>
             </label>
           );
