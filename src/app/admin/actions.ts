@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { db, withRetry } from "@/lib/supabase";
+import { db, isDbConfigured, withRetry } from "@/lib/supabase";
 import { requireAdmin } from "@/lib/auth";
 import { ipHash, safeEqual } from "@/lib/security";
 import { SESSION_COOKIE, SESSION_TTL_SECONDS, createSessionToken } from "@/lib/session";
@@ -41,7 +41,8 @@ export async function login(_: ActionResult, fd: FormData): Promise<ActionResult
   if (!expected || expected.length < 8) return fail("Админка не настроена: задайте ADMIN_PASSWORD (минимум 8 символов).");
 
   const hash = await ipHash();
-  try {
+  const dbReady = isDbConfigured();
+  if (dbReady) try {
     const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
     const { count } = await db()
       .from("admin_login_attempts")
@@ -55,7 +56,14 @@ export async function login(_: ActionResult, fd: FormData): Promise<ActionResult
   }
 
   const ok = safeEqual(password, expected);
-  await db().from("admin_login_attempts").insert({ ip_hash: hash, success: ok }).then(() => undefined, () => undefined);
+  // Журнал попыток не должен мешать входу: при сбое БД просто пропускаем
+  if (dbReady) {
+    try {
+      await db().from("admin_login_attempts").insert({ ip_hash: hash, success: ok });
+    } catch (e) {
+      console.error("login attempts log", e);
+    }
+  }
 
   if (!ok) {
     await new Promise((r) => setTimeout(r, 800));

@@ -26,12 +26,19 @@ export default async function PanelLayout({ children }: { children: React.ReactN
         </div>
       </div>
       <main className="container section" style={{ paddingBottom: 60 }}>
-        {!isDbConfigured() && (
-          <div className="alert alert-err" style={{ marginBottom: 20 }}>
-            База данных не подключена: задайте SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY в настройках Vercel.
+        {isDbConfigured() ? (
+          children
+        ) : (
+          <div className="card stack">
+            <h1 style={{ fontSize: "1.6rem" }}>База данных ещё не подключена</h1>
+            <p className="muted">Вход выполнен. Чтобы управлять формами, мероприятиями и альбомами, подключите Supabase:</p>
+            <ol style={{ paddingLeft: 20, margin: 0 }}>
+              <li>Создайте проект на supabase.com (регион Frankfurt).</li>
+              <li>SQL Editor → вставьте файл <code>supabase/schema.sql</code> из репозитория → Run.</li>
+              <li>В Vercel → Settings → Environment Variables добавьте <code>SUPABASE_URL</code> и <code>SUPABASE_SERVICE_ROLE_KEY</code>, затем Redeploy.</li>
+            </ol>
           </div>
         )}
-        {children}
       </main>
     </>
   );
