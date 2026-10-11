@@ -178,7 +178,7 @@ export function FormClient({ form }: { form: PublicForm }) {
         {message && <div className="alert alert-err" role="alert">{message}</div>}
         {phase === "retrying" && <div className="alert alert-info">Связь нестабильна — пробуем отправить ещё раз…</div>}
         {phase === "offline" && <div className="alert alert-info">Нет интернета. Ответ отправится сам, когда связь появится.</div>}
-        <button type="submit" className="btn btn-brand btn-lg btn-block" disabled={busy}>
+        <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={busy}>
           {busy ? "Отправляем…" : "Отправить"}
         </button>
         <p className="form-note">Имя и IP-адрес не сохраняются</p>
@@ -243,29 +243,39 @@ function Field({ field: f, value, error, onChange, disabled }: {
 
   const multi = f.type === "checkbox";
   const arr = Array.isArray(value) ? value : [];
+  const opts = f.options ?? [];
+  // короткие варианты — чипсами, длинные — строками со значком справа
+  const asChips = opts.length <= 12 && opts.every((o) => o.length <= 28);
+  const toggle = (o: string, checked: boolean) => {
+    if (!multi) return onChange(o);
+    onChange(checked ? [...arr, o] : arr.filter((x) => x !== o));
+  };
   return (
     <fieldset id={id} className="field" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }} aria-describedby={error ? errId : undefined} tabIndex={-1}>
-      <legend style={{ padding: 0, marginBottom: 6 }}>{label}</legend>
-      {multi && <span className="hint" style={{ marginTop: -4 }}>Можно выбрать несколько</span>}
-      <div className="choices">
-        {f.options?.map((o) => (
-          <label key={o} className="choice">
-            <input
-              type={multi ? "checkbox" : "radio"}
-              name={f.id}
-              value={o}
-              disabled={disabled}
-              checked={multi ? arr.includes(o) : str === o}
-              onChange={(e) => {
-                if (!multi) return onChange(o);
-                onChange(e.target.checked ? [...arr, o] : arr.filter((x) => x !== o));
-              }}
-            />
-            <span className={`mark ${multi ? "check" : "radio"}`} />
-            <span>{o}</span>
-          </label>
-        ))}
-      </div>
+      <legend style={{ padding: 0, marginBottom: 2 }}>{label}</legend>
+      {multi && <span className="hint">Можно выбрать несколько</span>}
+      {asChips ? (
+        <div className="choice-chips" style={{ marginTop: 6 }}>
+          {opts.map((o) => (
+            <label key={o} className="choice-chip">
+              <input type={multi ? "checkbox" : "radio"} name={f.id} value={o} disabled={disabled}
+                checked={multi ? arr.includes(o) : str === o} onChange={(e) => toggle(o, e.target.checked)} />
+              <span>{o}</span>
+            </label>
+          ))}
+        </div>
+      ) : (
+        <div className="choices" style={{ marginTop: 6 }}>
+          {opts.map((o) => (
+            <label key={o} className="choice">
+              <input type={multi ? "checkbox" : "radio"} name={f.id} value={o} disabled={disabled}
+                checked={multi ? arr.includes(o) : str === o} onChange={(e) => toggle(o, e.target.checked)} />
+              <span className={`mark ${multi ? "check" : "radio"}`} />
+              <span>{o}</span>
+            </label>
+          ))}
+        </div>
+      )}
       {err}
     </fieldset>
   );

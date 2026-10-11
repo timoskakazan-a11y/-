@@ -51,7 +51,7 @@ export function FormHeader({ form, responses, active }: { form: FullForm; respon
     <>
       <Link href="/admin/forms" className="back"><Icon name="chevronLeft" size={16} /> Формы</Link>
       <div className="page-head" style={{ alignItems: "flex-start", marginBottom: 12 }}>
-        <h1 style={{ overflowWrap: "anywhere" }}>{form.title}</h1>
+        <h1 style={{ overflowWrap: "anywhere", fontSize: 32 }}>{form.title}</h1>
       </div>
       <div className="row" style={{ marginBottom: 16, gap: 10 }}>
         {open ? <span className="pill pill-ok">принимает ответы</span> : <span className="pill">приём закрыт</span>}

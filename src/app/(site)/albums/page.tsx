@@ -10,7 +10,7 @@ export default async function AlbumsPage() {
   const albums = await getAlbums();
   return (
     <div className="container page">
-      <h1>Фотоархив</h1>
+      <h1 className="title-xl">Фотоархив</h1>
       <p className="page-lead">Фотографии с мероприятий. Альбомы открываются во ВКонтакте.</p>
       <div style={{ marginTop: 28 }}>
         {albums === null ? (
@@ -18,7 +18,7 @@ export default async function AlbumsPage() {
         ) : albums.length === 0 ? (
           <div className="empty">Альбомы скоро появятся</div>
         ) : (
-          <div className="albums">{albums.map((a) => <AlbumCard key={a.id} a={a} />)}</div>
+          <div className="folders">{albums.map((a) => <AlbumCard key={a.id} a={a} />)}</div>
         )}
       </div>
     </div>

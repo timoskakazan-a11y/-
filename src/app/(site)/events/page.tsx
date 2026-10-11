@@ -10,7 +10,7 @@ export default async function EventsPage() {
   const events = await getUpcomingEvents();
   return (
     <div className="container page">
-      <h1>События</h1>
+      <h1 className="title-xl">События</h1>
       <p className="page-lead">Ближайшие мероприятия школы, которые снимает медиацентр.</p>
       <div style={{ marginTop: 28 }}>
         {events === null ? (

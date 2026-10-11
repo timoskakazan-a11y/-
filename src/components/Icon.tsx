@@ -20,12 +20,18 @@ const paths = {
   logout: "M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H3",
   search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4",
   table: "M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM3 10h18M3 15h18M9 5v14",
+  asterisk: "M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9",
+  mic: "M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0M12 18v3M8 21h8",
+  camera: "M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z",
+  arrowUpRight: "M7 17 17 7M8 7h9v9",
+  folder: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+  music: "M9 18V5l11-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM20 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
   pin: "M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12zM12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
 } as const;
 
 export type IconName = keyof typeof paths;
 
-export function Icon({ name, size = 20, className, label }: { name: IconName; size?: number; className?: string; label?: string }) {
+export function Icon({ name, size = 20, className, label, weight = 1.8 }: { name: IconName; size?: number; className?: string; label?: string; weight?: number }) {
   return (
     <svg
       width={size}
@@ -33,7 +39,7 @@ export function Icon({ name, size = 20, className, label }: { name: IconName; si
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.8}
+      strokeWidth={weight}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}

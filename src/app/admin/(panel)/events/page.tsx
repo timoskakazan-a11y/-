@@ -41,7 +41,7 @@ export default async function EventsAdmin() {
 
   return (
     <div className="stack" style={{ gap: 20 }}>
-      <div className="page-head" style={{ marginBottom: 0 }}><h1>События</h1></div>
+      <h1 className="title-xl" style={{ fontSize: 40 }}>События</h1>
       <details className="disclose card">
         <summary className="row" style={{ fontWeight: 550 }}><Icon name="plus" size={18} /> Новое событие</summary>
         <ActionForm action={saveEvent} resetOnSuccess style={{ marginTop: 16 }}><EventFields /></ActionForm>

@@ -1,5 +1,6 @@
 import type { EventItem } from "@/lib/data";
 import { safeUrl } from "@/lib/format";
+import { colorFor } from "@/lib/palette";
 
 const TZ = "Europe/Moscow";
 
@@ -11,7 +12,7 @@ export function EventCard({ e }: { e: EventItem }) {
   const link = safeUrl(e.link_url);
   return (
     <article className="event">
-      <div className="event-date" aria-hidden>
+      <div className={`event-date ${colorFor(e.id)}`} aria-hidden>
         <b>{day}</b>
         <span>{month}</span>
       </div>

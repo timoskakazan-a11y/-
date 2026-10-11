@@ -5,30 +5,26 @@ import { Icon, type IconName } from "@/components/Icon";
 export const metadata: Metadata = { title: "О нас" };
 
 const directions: { icon: IconName; t: string; d: string }[] = [
-  { icon: "image", t: "Фото", d: "Репортажи с праздников, линеек и соревнований." },
-  { icon: "calendar", t: "Видео", d: "Съёмка и монтаж роликов, трансляции концертов." },
-  { icon: "forms", t: "Тексты", d: "Новости, интервью и посты для школьных соцсетей." },
-  { icon: "share", t: "Музыка", d: "Плейлисты для дискотек — из ваших заявок." },
+  { icon: "camera", t: "Фото", d: "Репортажи с праздников и линеек" },
+  { icon: "asterisk", t: "Видео", d: "Ролики и трансляции концертов" },
+  { icon: "mic", t: "Тексты", d: "Новости, интервью, посты" },
+  { icon: "music", t: "Музыка", d: "Плейлисты из ваших заявок" },
 ];
 
 export default function AboutPage() {
   return (
-    <div className="container narrow page">
-      <h1>О медиацентре</h1>
+    <div className="container page">
+      <h1 className="title-xl">Команда</h1>
       <p className="page-lead">
         Ученики и педагоги школы №71, которые рассказывают о жизни школы — так, чтобы её
         хотелось запомнить.
       </p>
 
-      <div className="group-title" style={{ marginTop: 36 }}>Чем занимаемся</div>
-      <div className="list">
-        {directions.map((x) => (
-          <div key={x.t} className="list-item" style={{ alignItems: "flex-start", paddingTop: 14, paddingBottom: 14 }}>
-            <span style={{ width: 36, height: 36, borderRadius: 10, background: "var(--blue-tint)", color: "var(--blue)", display: "grid", placeItems: "center", flex: "none" }}><Icon name={x.icon} size={18} /></span>
-            <div className="grow">
-              <h3>{x.t}</h3>
-              <p className="small muted" style={{ marginTop: 2 }}>{x.d}</p>
-            </div>
+      <div className="tiles" style={{ marginTop: 32 }}>
+        {directions.map((x, i) => (
+          <div key={x.t} className={`tile ${["tile-yellow", "tile-sky", "tile-lilac", "tile-pink"][i]}`}>
+            <div><h3>{x.t}</h3><p>{x.d}</p></div>
+            <Icon name={x.icon} size={44} weight={2.8} />
           </div>
         ))}
       </div>

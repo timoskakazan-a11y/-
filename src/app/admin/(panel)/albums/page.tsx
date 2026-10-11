@@ -38,7 +38,7 @@ export default async function AlbumsAdmin() {
 
   return (
     <div className="stack" style={{ gap: 20 }}>
-      <div className="page-head" style={{ marginBottom: 0 }}><h1>Альбомы</h1></div>
+      <h1 className="title-xl" style={{ fontSize: 40 }}>Альбомы</h1>
       <details className="disclose card">
         <summary className="row" style={{ fontWeight: 550 }}><Icon name="plus" size={18} /> Новый альбом</summary>
         <ActionForm action={saveAlbum} resetOnSuccess style={{ marginTop: 16 }}><AlbumFields /></ActionForm>
