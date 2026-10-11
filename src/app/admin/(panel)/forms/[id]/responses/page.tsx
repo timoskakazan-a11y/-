@@ -9,6 +9,7 @@ import { fmtDateTime, fmtShort } from "@/lib/time";
 import { deleteRow } from "@/app/admin/actions";
 
 const PAGE = 30;
+const TILES = ["tile-yellow", "tile-sky", "tile-lilac", "tile-pink", "tile-mint", "tile-blue"];
 const SUMMARY_LIMIT = 5000;
 const TABLE_PAGE = 2000;
 
@@ -99,13 +100,13 @@ export default async function Responses({ params, searchParams }: {
       {responses === 0 && <div className="empty">Ответов пока нет. Отправьте ссылку из вкладки «Вопросы».</div>}
 
       {responses > 0 && view === "summary" && (
-        <div className="stack">
-          {fields.map((f) => {
+        <div className="sum-grid">
+          {fields.map((f, fi) => {
             const s = summarize(f, rows);
             return (
-              <section key={f.id} className="card stack-sm">
+              <section key={f.id} className={`sum-card ${TILES[fi % TILES.length]}`}>
                 <h3 style={{ overflowWrap: "anywhere" }}>{f.label}</h3>
-                <p className="xs muted">
+                <p className="sum-meta">
                   Ответили {s.answered} из {rows.length}
                   {s.kind === "text" && s.unique > 0 ? ` · уникальных ${s.unique}` : ""}
                 </p>
@@ -122,10 +123,10 @@ export default async function Responses({ params, searchParams }: {
                     })}
                   </div>
                 ) : s.items.length === 0 ? (
-                  <p className="small muted">Нет ответов</p>
+                  <p className="sum-meta">Нет ответов</p>
                 ) : (
                   <>
-                    {s.repeats && <p className="xs muted" style={{ marginTop: 4 }}>Чаще всего (похожие ответы объединены):</p>}
+                    {s.repeats && <p className="sum-meta">Чаще всего (похожие ответы объединены):</p>}
                     <div className="bars" style={{ marginTop: 8 }}>
                       {s.items.map((it, k) => (
                         <div key={k} className="bar-row">
@@ -135,7 +136,7 @@ export default async function Responses({ params, searchParams }: {
                       ))}
                     </div>
                     {s.unique > s.items.length && (
-                      <Link href="?view=list" className="link small" style={{ marginTop: 8 }}>Ещё {s.unique - s.items.length} — во всех ответах</Link>
+                      <Link href="?view=list" className="sum-more">Ещё {s.unique - s.items.length} — во всех ответах</Link>
                     )}
                   </>
                 )}
@@ -174,10 +175,18 @@ export default async function Responses({ params, searchParams }: {
         <>
           <div className="answers-grid">
             {rows.map((r, i) => (
-              <article key={r.id} className="card answer">
+              <article key={r.id} className="answer">
                 <div className="answer-head">
-                  <span>№{responses - (page - 1) * PAGE - i}</span>
+                  <span className="qnum">№{responses - (page - 1) * PAGE - i}</span>
                   <span>{fmtDateTime(r.created_at)}</span>
+                  <span className="spacer" />
+                  <ActionForm action={deleteRow} confirm="Удалить этот ответ?" inline>
+                    <input type="hidden" name="table" value="form_responses" />
+                    <input type="hidden" name="id" value={r.id} />
+                    <SubmitButton className="icon-btn danger" pendingText="…" title="Удалить ответ">
+                      <Icon name="trash" size={18} />
+                    </SubmitButton>
+                  </ActionForm>
                 </div>
                 <dl style={{ margin: 0 }}>
                   {[...fields.map((f) => ({ k: f.id, label: f.label })), ...extraKeys.map((k) => ({ k, label: `${k} (удалённый вопрос)` }))].map(({ k, label }) => {
@@ -192,13 +201,6 @@ export default async function Responses({ params, searchParams }: {
                     );
                   })}
                 </dl>
-                <ActionForm action={deleteRow} confirm="Удалить этот ответ?" inline style={{ alignSelf: "flex-end" }}>
-                  <input type="hidden" name="table" value="form_responses" />
-                  <input type="hidden" name="id" value={r.id} />
-                  <SubmitButton className="btn btn-ghost btn-sm" pendingText="Удаляем…" title="Удалить ответ">
-                    <Icon name="trash" size={16} /> Удалить
-                  </SubmitButton>
-                </ActionForm>
               </article>
             ))}
           </div>

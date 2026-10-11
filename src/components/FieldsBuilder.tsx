@@ -65,7 +65,7 @@ export function FieldsBuilder({ initial, hasResponses }: { initial: FormField[];
       {fields.map((f, i) => (
         <div key={f.id} className="qcard">
           <div className="qcard-top">
-            <span className="qcard-head">Вопрос {i + 1}</span>
+            <span className="qcard-head"><span className="qnum">{i + 1}</span>Вопрос</span>
             <select className="type-select" value={f.type} aria-label="Тип ответа" onChange={(e) => setType(i, e.target.value as FieldType)}>
               {Object.entries(FIELD_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>

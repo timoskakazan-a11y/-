@@ -549,7 +549,7 @@ details.disclose.card > summary { color: var(--blue); font-weight: 600; min-heig
 .qcard:focus-within { box-shadow: 0 0 0 2px var(--blue); }
 .qcard-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
 .qcard-head { font-size: 13px; font-weight: 600; color: var(--label-2); }
-.type-select { -webkit-appearance: none; appearance: none; border: 0; border-radius: 999px; height: 32px; padding: 0 30px 0 12px; font: inherit; font-size: 14px; font-weight: 600; color: var(--blue); background: var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%232f6bff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 11px center; cursor: pointer; max-width: 60%; }
+.type-select { -webkit-appearance: none; appearance: none; border: 0; border-radius: 999px; height: 32px; padding: 0 30px 0 12px; font: inherit; font-size: 14px; font-weight: 600; color: var(--blue); background: var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%238e8e93' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 11px center; cursor: pointer; max-width: 60%; }
 .qcard-title { width: 100%; font: inherit; font-size: 20px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.3; color: var(--label); resize: none; field-sizing: content; min-height: 30px; padding: 0; }
 .qcard-title::placeholder { color: var(--label-3); }
 .qcard-title:focus { outline: none; }
@@ -671,3 +671,46 @@ button.fx-glass-chip:active { transform: scale(.96); }
 .fx-done-actions { display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s5); }
 @media (prefers-reduced-motion: reduce) { .fx-done-icon { animation: none; } }
 body:has(.fx-dock) footer { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+
+/* =========================================================
+   Админка в языке сайта: акцент чёрный, а не синий;
+   сводка — пастельные плитки, номера — белые пилюли
+   ========================================================= */
+.admin-top, .admin-main, .tabbar { --blue: var(--label); --blue-tint: var(--fill); --blue-tint-2: var(--fill-2); }
+.admin-main .btn-primary, .admin-main .btn-brand, .admin-main .opt-mark.add { color: var(--bg); }
+.admin-main .btn-primary:hover, .admin-main .btn-brand:hover { background: var(--label); opacity: .85; }
+.admin-main .btn-secondary { background: var(--card); }
+.admin-main .btn-secondary:hover { background: var(--card-2); }
+.admin-main .type-select { color: var(--label); }
+.admin-main .add-question { border: 0; background: var(--card); }
+.admin-main .add-question:hover { background: var(--card-2); }
+.admin-main .sheet td.sc.on { box-shadow: inset 0 0 0 2px var(--label); background: var(--fill) !important; }
+
+.qnum { flex: none; display: inline-grid; place-items: center; min-width: 28px; height: 26px; padding: 0 8px; border-radius: 999px; background: var(--bg); color: var(--label); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.qcard-head { display: inline-flex; align-items: center; gap: 8px; }
+
+/* сводка */
+.sum-card { display: flex; flex-direction: column; gap: 4px; padding: var(--s5); border-radius: 28px; color: var(--p-tile-ink); }
+@supports (corner-shape: squircle) { .sum-card { border-radius: 52px; corner-shape: squircle; } }
+@media (min-width: 720px) { .sum-card { padding: var(--s6); } }
+.sum-card h3 { color: inherit; font-size: 21px; font-weight: 750; letter-spacing: -0.025em; line-height: 1.2; }
+.sum-meta { font-size: 13px; color: rgba(11, 11, 15, .6); }
+.sum-card .bars { margin-top: var(--s3); gap: 14px; }
+.sum-card .bar-label { font-size: 16px; font-weight: 500; }
+.sum-card .bar-label span:last-child { color: rgba(11, 11, 15, .6); font-weight: 600; }
+.sum-card .bar { height: 10px; background: rgba(255, 255, 255, .55); }
+.sum-card .bar i { background: var(--p-tile-ink); }
+.sum-more { margin-top: var(--s3); align-self: flex-start; display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 999px; background: rgba(255, 255, 255, .55); color: var(--p-tile-ink); font-size: 14px; font-weight: 600; }
+
+/* карточки ответов */
+.answer { display: flex; flex-direction: column; gap: var(--s3); padding: var(--s3) var(--s4) var(--s5); border-radius: 26px; background: var(--card); min-width: 0; }
+.answer-head { display: flex; align-items: center; gap: var(--s2); margin-right: -8px; font-size: 13px; color: var(--label-2); }
+.answer-head span:first-child { font-weight: 700; color: var(--label); }
+.answer-head .icon-btn { width: 36px; height: 36px; }
+.answer dl { display: flex; flex-direction: column; gap: var(--s2); }
+.answer .qa { padding: 10px 14px 12px; border-radius: 16px; background: var(--bg); }
+.answer .qa + .qa { margin-top: 0; }
+.answer .qa dd { font-size: 17px; font-weight: 500; letter-spacing: -0.014em; }
+.sum-grid { display: grid; gap: var(--s3); align-items: start; }
+@media (min-width: 860px) { .sum-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s4); } }
+.sum-grid > p { grid-column: 1 / -1; }
