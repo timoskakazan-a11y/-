@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { site } from "@/lib/site";
 
-const sans = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-sans", display: "swap" });
+const sans = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-sans", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: site.name, template: `%s — ${site.shortName}` },
@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f3ee" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1015" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#111113" },
   ],
 };
 

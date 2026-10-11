@@ -188,8 +188,8 @@ export async function createForm(_: ActionResult, fd: FormData): Promise<ActionR
     .from("forms")
     .insert({
       ...parsed.data,
-      is_open: false,
-      fields: [{ id: "q1", type: "text", label: "Ваш ответ", required: true }],
+      is_open: true,
+      fields: [{ id: "q1", type: "text", label: "Новый вопрос", required: true }],
     })
     .select("id")
     .single();
@@ -197,12 +197,53 @@ export async function createForm(_: ActionResult, fd: FormData): Promise<ActionR
   redirect(`/admin/forms/${data.id}`);
 }
 
+const fieldsJson = z.string().transform((v, ctx) => {
+  try {
+    const r = fieldsSchema.safeParse(JSON.parse(v));
+    if (!r.success) {
+      const issue = r.error.issues[0];
+      const idx = typeof issue?.path[0] === "number" ? `Вопрос ${issue.path[0] + 1}: ` : "";
+      const msg = issue?.path.includes("label") ? "введите текст вопроса" : issue?.message ?? "ошибка";
+      ctx.addIssue({ code: "custom", message: idx + msg });
+      return [];
+    }
+    if (r.data.length === 0) ctx.addIssue({ code: "custom", message: "Добавьте хотя бы один вопрос" });
+    return r.data;
+  } catch {
+    ctx.addIssue({ code: "custom", message: "Ошибка в вопросах" });
+    return [];
+  }
+});
+
+async function updateForm(id: string, patch: Record<string, unknown>): Promise<ActionResult> {
+  try {
+    await withRetry(async () => {
+      const { error } = await db()
+        .from("forms")
+        .update({ ...patch, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    }, 2);
+  } catch (e) {
+    return fail(errText(e));
+  }
+  revalidatePath("/admin", "layout");
+  return done("Сохранено");
+}
+
+export async function saveFormFields(_: ActionResult, fd: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const parsed = z.object({ id: uuid, fields: fieldsJson }).safeParse(Object.fromEntries(fd));
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Проверьте вопросы");
+  return updateForm(parsed.data.id, { fields: parsed.data.fields });
+}
+
 const formSettingsSchema = z.object({
   id: uuid,
   title: z.string().trim().min(1, "Введите название").max(200),
   slug: slugSchema,
   description: z.string().trim().max(3000).default(""),
-  success_text: z.string().trim().min(1).max(500),
+  success_text: z.string().trim().min(1, "Введите текст после отправки").max(500),
   is_open: bool,
   closes_at: z.union([z.literal(""), z.string()]).transform((v, ctx) => {
     if (!v) return null;
@@ -211,42 +252,16 @@ const formSettingsSchema = z.object({
     return iso;
   }),
   max_responses: z
-    .union([z.literal(""), z.coerce.number().int().positive().max(1_000_000)])
+    .union([z.literal(""), z.coerce.number().int().positive("Максимум ответов — положительное число").max(1_000_000)])
     .transform((v) => (v === "" ? null : v)),
-  fields: z.string().transform((v, ctx) => {
-    try {
-      const r = fieldsSchema.safeParse(JSON.parse(v));
-      if (!r.success) {
-        ctx.addIssue({ code: "custom", message: r.error.issues[0]?.message ?? "Ошибка в вопросах" });
-        return [];
-      }
-      if (r.data.length === 0) ctx.addIssue({ code: "custom", message: "Добавьте хотя бы один вопрос" });
-      return r.data;
-    } catch {
-      ctx.addIssue({ code: "custom", message: "Ошибка в вопросах" });
-      return [];
-    }
-  }),
 });
 
-export async function saveForm(_: ActionResult, fd: FormData): Promise<ActionResult> {
+export async function saveFormSettings(_: ActionResult, fd: FormData): Promise<ActionResult> {
   await requireAdmin();
   const parsed = formSettingsSchema.safeParse(Object.fromEntries(fd));
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Проверьте поля");
   const { id, ...rest } = parsed.data;
-  try {
-    await withRetry(async () => {
-      const { error } = await db()
-        .from("forms")
-        .update({ ...rest, updated_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-    }, 2);
-  } catch (e) {
-    return fail(errText(e));
-  }
-  revalidatePath("/admin", "layout");
-  return done("Форма сохранена");
+  return updateForm(id, rest);
 }
 
 export async function toggleForm(_: ActionResult, fd: FormData): Promise<ActionResult> {

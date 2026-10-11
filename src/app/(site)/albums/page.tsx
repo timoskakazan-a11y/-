@@ -9,14 +9,14 @@ export const metadata: Metadata = { title: "Фотоархив" };
 export default async function AlbumsPage() {
   const albums = await getAlbums();
   return (
-    <div className="container section">
+    <div className="container page">
       <h1>Фотоархив</h1>
-      <p className="muted">Фотографии с мероприятий — в альбомах ВКонтакте.</p>
-      <div style={{ marginTop: 24 }}>
+      <p className="lead">Фотографии с мероприятий — в альбомах ВКонтакте.</p>
+      <div style={{ marginTop: 28 }}>
         {albums === null ? (
           <Unavailable />
         ) : albums.length === 0 ? (
-          <div className="empty">Альбомы скоро появятся.</div>
+          <div className="empty">Альбомы скоро появятся</div>
         ) : (
           <div className="grid">{albums.map((a) => <AlbumCard key={a.id} a={a} />)}</div>
         )}

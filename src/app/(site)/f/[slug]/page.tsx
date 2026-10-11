@@ -23,25 +23,22 @@ export default async function FormPage({ params }: Props) {
   if (r.status === "not_found") notFound();
 
   return (
-    <div className="container section">
-      <div className="form-wrap">
-        {r.status === "ok" && <FormClient form={r.form} />}
-        {r.status === "closed" && (
-          <div className="card success">
-            <div className="success-icon" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>⏸</div>
-            <h1 style={{ fontSize: "1.8rem" }}>{r.title}</h1>
-            <p className="muted">Приём ответов на эту форму закрыт.</p>
-            <Link href="/" className="btn btn-ghost">На главную</Link>
-          </div>
-        )}
-        {r.status === "error" && (
-          <div className="card success">
-            <h1 style={{ fontSize: "1.6rem" }}>Не удалось загрузить форму</h1>
-            <p className="muted">Похоже, временный сбой связи. Попробуйте обновить страницу.</p>
-            <RetryButton />
-          </div>
-        )}
-      </div>
+    <div className="container narrow form-page">
+      {r.status === "ok" && <FormClient form={r.form} />}
+      {r.status === "closed" && (
+        <div className="done">
+          <h1 className="form-title">{r.title}</h1>
+          <p className="muted" style={{ margin: "8px 0 24px" }}>Приём ответов на эту форму закрыт.</p>
+          <Link href="/" className="btn btn-secondary">На главную</Link>
+        </div>
+      )}
+      {r.status === "error" && (
+        <div className="done">
+          <h1 className="form-title">Не удалось загрузить форму</h1>
+          <p className="muted" style={{ margin: "8px 0 24px" }}>Похоже, временный сбой связи. Попробуйте обновить страницу.</p>
+          <RetryButton />
+        </div>
+      )}
     </div>
   );
 }

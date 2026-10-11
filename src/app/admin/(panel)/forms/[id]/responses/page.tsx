@@ -1,88 +1,179 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { z } from "zod";
 import { db } from "@/lib/supabase";
-import { deleteRow } from "../../../../actions";
+import { loadForm, FormHeader } from "@/components/FormHeader";
 import { ActionForm, SubmitButton } from "@/components/ActionForm";
-import { fieldsSchema } from "@/lib/forms";
+import { Icon } from "@/components/Icon";
+import { fieldsSchema, type FormField } from "@/lib/forms";
 import { fmtDateTime } from "@/lib/time";
+import { deleteRow } from "@/app/admin/actions";
 
-const PAGE = 100;
+const PAGE = 30;
+const SUMMARY_LIMIT = 5000;
+
+type Row = { id: string; data: Record<string, unknown>; created_at: string };
+
+function norm(s: string) {
+  return s.toLowerCase().replace(/[«»"'`ё]/g, (c) => (c === "ё" ? "е" : "")).replace(/\s+/g, " ").trim();
+}
+
+function summarize(field: FormField, rows: Row[]) {
+  const answered = rows.filter((r) => {
+    const v = r.data?.[field.id];
+    return Array.isArray(v) ? v.length > 0 : typeof v === "string" && v.trim() !== "";
+  });
+  if (field.options && field.type !== "text" && field.type !== "textarea") {
+    const counts = new Map(field.options.map((o) => [o, 0]));
+    for (const r of answered) {
+      const v = r.data[field.id];
+      for (const x of Array.isArray(v) ? v : [v]) if (typeof x === "string" && counts.has(x)) counts.set(x, counts.get(x)! + 1);
+    }
+    return { kind: "options" as const, answered: answered.length, items: [...counts].map(([label, n]) => ({ label, n })) };
+  }
+  const groups = new Map<string, { label: string; n: number }>();
+  for (const r of answered) {
+    const v = String(r.data[field.id]);
+    const k = norm(v);
+    const g = groups.get(k);
+    if (g) g.n++;
+    else groups.set(k, { label: v.trim(), n: 1 });
+  }
+  const sorted = [...groups.values()].sort((a, b) => b.n - a.n);
+  return { kind: "text" as const, answered: answered.length, unique: sorted.length, items: sorted.slice(0, 10), repeats: sorted.some((g) => g.n > 1) };
+}
 
 export default async function Responses({ params, searchParams }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; view?: string }>;
 }) {
   const { id } = await params;
-  if (!z.string().uuid().safeParse(id).success) notFound();
-  const page = Math.max(1, Number((await searchParams).page) || 1);
+  const sp = await searchParams;
+  const view = sp.view === "list" ? "list" : "summary";
+  const page = Math.max(1, Number(sp.page) || 1);
 
-  const { data: form } = await db().from("forms").select("id,title,slug,fields").eq("id", id).maybeSingle();
-  if (!form) notFound();
-  const fields = fieldsSchema.safeParse(form.fields);
-  const cols = fields.success ? fields.data : [];
+  const { form, responses } = await loadForm(id);
+  const parsed = fieldsSchema.safeParse(form.fields);
+  const fields = parsed.success ? parsed.data : [];
 
-  const { data, count, error } = await db()
-    .from("form_responses")
-    .select("id,data,created_at", { count: "exact" })
-    .eq("form_id", id)
-    .order("created_at", { ascending: false })
-    .range((page - 1) * PAGE, page * PAGE - 1);
-
-  const pages = Math.max(1, Math.ceil((count ?? 0) / PAGE));
-  const extraKeys = [...new Set((data ?? []).flatMap((r) => Object.keys(r.data ?? {})))].filter((k) => !cols.some((c) => c.id === k));
+  let rows: Row[] = [];
+  let error: string | null = null;
+  if (view === "summary") {
+    for (let from = 0; from < SUMMARY_LIMIT; from += 1000) {
+      const r = await db().from("form_responses").select("id,data,created_at").eq("form_id", id).order("created_at", { ascending: false }).range(from, from + 999);
+      if (r.error) { error = r.error.message; break; }
+      rows.push(...((r.data ?? []) as Row[]));
+      if (!r.data || r.data.length < 1000) break;
+    }
+  } else {
+    const r = await db().from("form_responses").select("id,data,created_at").eq("form_id", id).order("created_at", { ascending: false }).range((page - 1) * PAGE, page * PAGE - 1);
+    if (r.error) error = r.error.message;
+    rows = (r.data ?? []) as Row[];
+  }
+  const pages = Math.max(1, Math.ceil(responses / PAGE));
+  const extraKeys = view === "list" ? [...new Set(rows.flatMap((r) => Object.keys(r.data ?? {})))].filter((k) => !fields.some((f) => f.id === k)) : [];
 
   return (
-    <div className="stack">
-      <div className="row">
-        <Link href={`/admin/forms/${id}`} className="muted">← К форме</Link>
-      </div>
-      <div className="row">
-        <h1 style={{ fontSize: "2rem", margin: 0 }}>Ответы: {form.title}</h1>
-        <span className="badge">{count ?? 0}</span>
-        <span className="spacer" />
-        <a className="btn btn-sm" href={`/api/admin/forms/${id}/export`}>Скачать CSV (Excel)</a>
-      </div>
-      {error && <div className="alert alert-err">Ошибка загрузки: {error.message}</div>}
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>№</th>
-              <th>Время</th>
-              {cols.map((c) => <th key={c.id}>{c.label}</th>)}
-              {extraKeys.map((k) => <th key={k} className="muted">{k} (удалён)</th>)}
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.map((r, i) => (
-              <tr key={r.id}>
-                <td className="muted">{(count ?? 0) - (page - 1) * PAGE - i}</td>
-                <td className="small" style={{ whiteSpace: "nowrap" }}>{fmtDateTime(r.created_at)}</td>
-                {[...cols.map((c) => c.id), ...extraKeys].map((k) => {
-                  const v = r.data?.[k];
-                  return <td key={k} className="cell-text">{Array.isArray(v) ? v.join(", ") : v ?? ""}</td>;
-                })}
-                <td>
-                  <ActionForm action={deleteRow} confirm="Удалить этот ответ?" inline>
-                    <input type="hidden" name="table" value="form_responses" />
-                    <input type="hidden" name="id" value={r.id} />
-                    <SubmitButton className="btn btn-sm btn-danger" pendingText="…">✕</SubmitButton>
-                  </ActionForm>
-                </td>
-              </tr>
-            ))}
-            {data?.length === 0 && <tr><td colSpan={cols.length + 3} className="muted">Ответов пока нет</td></tr>}
-          </tbody>
-        </table>
-      </div>
-      {pages > 1 && (
-        <div className="row">
-          {page > 1 && <Link className="btn btn-sm btn-ghost" href={`?page=${page - 1}`}>← Новее</Link>}
-          <span className="muted small">Стр. {page} из {pages}</span>
-          {page < pages && <Link className="btn btn-sm btn-ghost" href={`?page=${page + 1}`}>Старше →</Link>}
+    <div>
+      <FormHeader form={form} responses={responses} active="responses" />
+
+      <div className="row" style={{ marginBottom: 16 }}>
+        <div className="segmented" style={{ marginBottom: 0, flex: "1 1 220px" }}>
+          <Link href="?view=summary" aria-current={view === "summary" ? "page" : undefined}>Сводка</Link>
+          <Link href="?view=list" aria-current={view === "list" ? "page" : undefined}>Все ответы</Link>
         </div>
+        <a className="btn btn-secondary" href={`/api/admin/forms/${id}/export`}><Icon name="download" size={18} /> Excel</a>
+      </div>
+
+      {error && <div className="alert alert-err" style={{ marginBottom: 12 }}>Ошибка загрузки: {error}</div>}
+      {responses === 0 && <div className="empty">Ответов пока нет. Отправьте ссылку из вкладки «Вопросы».</div>}
+
+      {responses > 0 && view === "summary" && (
+        <div className="stack">
+          {fields.map((f) => {
+            const s = summarize(f, rows);
+            return (
+              <section key={f.id} className="card stack-sm">
+                <h3 style={{ overflowWrap: "anywhere" }}>{f.label}</h3>
+                <p className="xs muted">
+                  Ответили {s.answered} из {rows.length}
+                  {s.kind === "text" && s.unique > 0 ? ` · уникальных ${s.unique}` : ""}
+                </p>
+                {s.kind === "options" ? (
+                  <div className="bars" style={{ marginTop: 8 }}>
+                    {[...s.items].sort((a, b) => b.n - a.n).map((it) => {
+                      const pct = s.answered ? Math.round((it.n / s.answered) * 100) : 0;
+                      return (
+                        <div key={it.label} className="bar-row">
+                          <div className="bar-label"><span>{it.label}</span><span>{it.n} · {pct}%</span></div>
+                          <div className="bar"><i style={{ width: `${pct}%` }} /></div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : s.items.length === 0 ? (
+                  <p className="small muted">Нет ответов</p>
+                ) : (
+                  <>
+                    {s.repeats && <p className="xs muted" style={{ marginTop: 4 }}>Чаще всего (похожие ответы объединены):</p>}
+                    <div className="bars" style={{ marginTop: 8 }}>
+                      {s.items.map((it, k) => (
+                        <div key={k} className="bar-row">
+                          <div className="bar-label"><span>{it.label}</span>{s.repeats && <span>{it.n}</span>}</div>
+                          {s.repeats && <div className="bar"><i style={{ width: `${Math.round((it.n / s.items[0].n) * 100)}%` }} /></div>}
+                        </div>
+                      ))}
+                    </div>
+                    {s.unique > s.items.length && (
+                      <Link href="?view=list" className="link small" style={{ marginTop: 8 }}>Ещё {s.unique - s.items.length} — во всех ответах</Link>
+                    )}
+                  </>
+                )}
+              </section>
+            );
+          })}
+          {responses > SUMMARY_LIMIT && <p className="xs muted">Сводка посчитана по последним {SUMMARY_LIMIT} ответам. Полные данные — в выгрузке Excel.</p>}
+        </div>
+      )}
+
+      {responses > 0 && view === "list" && (
+        <>
+          <div className="answers-grid">
+            {rows.map((r, i) => (
+              <article key={r.id} className="card answer">
+                <div className="answer-head">
+                  <span>№{responses - (page - 1) * PAGE - i}</span>
+                  <span>{fmtDateTime(r.created_at)}</span>
+                </div>
+                <dl style={{ margin: 0 }}>
+                  {[...fields.map((f) => ({ k: f.id, label: f.label })), ...extraKeys.map((k) => ({ k, label: `${k} (удалённый вопрос)` }))].map(({ k, label }) => {
+                    const v = r.data?.[k];
+                    const text = Array.isArray(v) ? v.join(", ") : typeof v === "string" ? v : "";
+                    if (!text) return null;
+                    return (
+                      <div key={k} className="qa">
+                        <dt>{label}</dt>
+                        <dd>{text}</dd>
+                      </div>
+                    );
+                  })}
+                </dl>
+                <ActionForm action={deleteRow} confirm="Удалить этот ответ?" inline style={{ alignSelf: "flex-end" }}>
+                  <input type="hidden" name="table" value="form_responses" />
+                  <input type="hidden" name="id" value={r.id} />
+                  <SubmitButton className="btn btn-ghost btn-sm" pendingText="Удаляем…" title="Удалить ответ">
+                    <Icon name="trash" size={16} /> Удалить
+                  </SubmitButton>
+                </ActionForm>
+              </article>
+            ))}
+          </div>
+          {pages > 1 && (
+            <div className="row" style={{ justifyContent: "center", marginTop: 20 }}>
+              {page > 1 && <Link className="btn btn-secondary btn-sm" href={`?view=list&page=${page - 1}`}>← Новее</Link>}
+              <span className="small muted">{page} из {pages}</span>
+              {page < pages && <Link className="btn btn-secondary btn-sm" href={`?view=list&page=${page + 1}`}>Старше →</Link>}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

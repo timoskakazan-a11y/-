@@ -1,48 +1,36 @@
-import Link from "next/link";
-import { db } from "@/lib/supabase";
 import { createForm } from "../../actions";
 import { ActionForm, SubmitButton } from "@/components/ActionForm";
+import { listFormsWithStats } from "@/lib/admin-data";
+import { FormListItem } from "@/components/FormListItem";
+import { Icon } from "@/components/Icon";
 
 export default async function FormsAdmin() {
-  const [{ data, error }, stats] = await Promise.all([
-    db().from("forms").select("id,slug,title,is_open,closes_at").order("created_at", { ascending: false }),
-    db().from("form_stats").select("form_id,responses"),
-  ]);
-  const counts = new Map((stats.data ?? []).map((s) => [s.form_id, s.responses]));
+  const { forms, error } = await listFormsWithStats();
 
   return (
-    <div className="stack">
-      <h1 style={{ fontSize: "2rem" }}>Формы</h1>
-      <details className="card">
-        <summary>＋ Новая форма</summary>
-        <ActionForm action={createForm} className="form-grid">
-          <label className="field"><span className="field-label">Название*</span>
-            <input className="input" name="title" required maxLength={200} placeholder="Песни для новогодней дискотеки" /></label>
-          <label className="field"><span className="field-label">Адрес ссылки* (латиница, цифры, дефис)</span>
-            <input className="input" name="slug" required pattern="[a-z0-9][a-z0-9\-]{1,60}" placeholder="disco-new-year" /></label>
-          <div><SubmitButton pendingText="Создаём…">Создать и настроить</SubmitButton></div>
+    <div className="stack" style={{ gap: 20 }}>
+      <div className="page-head" style={{ marginBottom: 0 }}><h1>Формы</h1></div>
+
+      <details className="disclose card" open={forms.length === 0}>
+        <summary className="row" style={{ fontWeight: 550 }}>
+          <Icon name="plus" size={18} /> Новая форма
+        </summary>
+        <ActionForm action={createForm} className="stack" style={{ marginTop: 16 }}>
+          <label className="field">
+            <span className="label">Название</span>
+            <input className="input" name="title" required maxLength={200} placeholder="Песни для новогодней дискотеки" />
+          </label>
+          <label className="field">
+            <span className="label">Адрес ссылки</span>
+            <input className="input" name="slug" required pattern="[a-z0-9][a-z0-9\-]{1,60}" placeholder="new-year" autoCapitalize="off" autoCorrect="off" spellCheck={false} />
+            <span className="hint">Латиница, цифры и дефис. Ссылка будет: сайт/f/new-year</span>
+          </label>
+          <SubmitButton className="btn btn-primary" pendingText="Создаём…">Создать</SubmitButton>
         </ActionForm>
       </details>
+
       {error && <div className="alert alert-err">Ошибка загрузки: {error.message}</div>}
-      <div className="table-wrap">
-        <table>
-          <thead><tr><th>Форма</th><th>Статус</th><th>Ответов</th><th></th></tr></thead>
-          <tbody>
-            {data?.map((f) => (
-              <tr key={f.id}>
-                <td><Link href={`/admin/forms/${f.id}`}><b>{f.title}</b></Link><div className="muted small">/f/{f.slug}</div></td>
-                <td>{f.is_open ? <span className="badge badge-ok">открыта</span> : <span className="badge badge-muted">закрыта</span>}</td>
-                <td>{counts.get(f.id) ?? 0}</td>
-                <td className="row" style={{ justifyContent: "flex-end" }}>
-                  <Link className="btn btn-sm btn-ghost" href={`/admin/forms/${f.id}`}>Настроить</Link>
-                  <Link className="btn btn-sm btn-ghost" href={`/admin/forms/${f.id}/responses`}>Ответы</Link>
-                </td>
-              </tr>
-            ))}
-            {data?.length === 0 && <tr><td colSpan={4} className="muted">Форм пока нет — создайте первую</td></tr>}
-          </tbody>
-        </table>
-      </div>
+      {forms.length > 0 && <div className="list">{forms.map((f) => <FormListItem key={f.id} f={f} />)}</div>}
     </div>
   );
 }

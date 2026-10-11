@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { maxLen, validateAnswers, type Answers, type FormField, type PublicForm } from "@/lib/forms";
+import { Icon } from "@/components/Icon";
 
 type Phase = "idle" | "sending" | "retrying" | "offline" | "done";
 
@@ -138,11 +139,11 @@ export function FormClient({ form }: { form: PublicForm }) {
 
   if (phase === "done") {
     return (
-      <div className="card success" role="status">
-        <div className="success-icon">✓</div>
-        <h1 style={{ fontSize: "1.8rem" }}>{form.title}</h1>
-        <p>{form.success_text}</p>
-        <button className="btn btn-ghost" onClick={again}>Отправить ещё один ответ</button>
+      <div className="done" role="status">
+        <div className="done-icon"><Icon name="check" size={28} /></div>
+        <h1 className="form-title">{form.success_text}</h1>
+        <p className="muted" style={{ marginTop: 8 }}>{form.title}</p>
+        <button className="btn btn-secondary" style={{ marginTop: 24 }} onClick={again}>Отправить ещё один ответ</button>
       </div>
     );
   }
@@ -151,13 +152,9 @@ export function FormClient({ form }: { form: PublicForm }) {
 
   return (
     <form onSubmit={onSubmit} noValidate>
-      <div className="form-head">
-        <h1 style={{ fontSize: "clamp(1.6rem, 4vw, 2.2rem)" }}>{form.title}</h1>
-        {form.description && <p className="muted" style={{ whiteSpace: "pre-line", margin: 0 }}>{form.description}</p>}
-        <p className="small muted" style={{ margin: "12px 0 0" }}>
-          🔒 Форма анонимная: мы не спрашиваем имя и не сохраняем ваш IP-адрес.
-        </p>
-      </div>
+      <h1 className="form-title">{form.title}</h1>
+      {form.description && <p className="form-desc">{form.description}</p>}
+      <p className="form-note"><Icon name="lock" size={14} /> Анонимно: имя и IP-адрес не сохраняются</p>
 
       {/* Скрытое поле-ловушка для ботов */}
       <div className="visually-hidden" aria-hidden>
@@ -167,23 +164,25 @@ export function FormClient({ form }: { form: PublicForm }) {
         </label>
       </div>
 
-      <div className="stack">
+      <div className="questions">
         {form.fields.map((f) => (
-          <div key={f.id} className="card">
+          <div key={f.id} className="question">
             <Field field={f} value={answers[f.id]} error={errors[f.id]} onChange={(v) => set(f.id, v)} disabled={busy} />
           </div>
         ))}
       </div>
 
-      {message && <div className="alert alert-err" role="alert" style={{ marginTop: 16 }}>{message}</div>}
-      {phase === "retrying" && <div className="alert" style={{ marginTop: 16, background: "var(--accent-soft)" }}>Связь нестабильна, пробуем отправить ещё раз…</div>}
-      {phase === "offline" && <div className="alert" style={{ marginTop: 16, background: "var(--accent-soft)" }}>Нет интернета. Ответ отправится автоматически, как только связь появится.</div>}
+      {message && <div className="alert alert-err" role="alert" style={{ marginTop: 24 }}>{message}</div>}
+      {phase === "retrying" && <div className="alert alert-info" style={{ marginTop: 24 }}>Связь нестабильна — пробуем отправить ещё раз…</div>}
+      {phase === "offline" && <div className="alert alert-info" style={{ marginTop: 24 }}>Нет интернета. Ответ отправится сам, когда связь появится.</div>}
 
-      <div className="row" style={{ marginTop: 20 }}>
-        <button type="submit" className="btn" disabled={busy} style={{ minWidth: 180 }}>
+      <div className="form-actions">
+        <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={busy}>
           {busy ? "Отправляем…" : "Отправить"}
         </button>
-        <span className="small muted"><span className="req">*</span> — обязательные вопросы</span>
+        {form.fields.some((f) => f.required) && (
+          <span className="xs muted"><span className="req" style={{ marginLeft: 0 }}>*</span> обязательный вопрос</span>
+        )}
       </div>
     </form>
   );
@@ -206,7 +205,7 @@ function Field({ field: f, value, error, onChange, disabled }: {
     disabled,
   };
   const label = (
-    <span className="field-label">
+    <span className="label">
       {f.label}
       {f.required && <span className="req" aria-hidden>*</span>}
     </span>
@@ -220,9 +219,9 @@ function Field({ field: f, value, error, onChange, disabled }: {
       <label className="field" htmlFor={id}>
         {label}
         {f.type === "text" ? (
-          <input {...common} className="input" value={str} maxLength={limit} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value)} />
+          <input {...common} className="input" value={str} maxLength={limit} placeholder={f.placeholder ?? "Ваш ответ"} onChange={(e) => onChange(e.target.value)} />
         ) : (
-          <textarea {...common} className="textarea" value={str} maxLength={limit} placeholder={f.placeholder} onChange={(e) => onChange(e.target.value)} />
+          <textarea {...common} className="textarea" value={str} maxLength={limit} placeholder={f.placeholder ?? "Ваш ответ"} onChange={(e) => onChange(e.target.value)} />
         )}
         {str.length > limit * 0.8 && <div className="counter">{str.length} / {limit}</div>}
         {err}
@@ -235,7 +234,7 @@ function Field({ field: f, value, error, onChange, disabled }: {
       <label className="field" htmlFor={id}>
         {label}
         <select {...common} className="select" value={str} onChange={(e) => onChange(e.target.value)}>
-          <option value="">— выберите —</option>
+          <option value="">Выберите…</option>
           {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
         {err}
@@ -246,24 +245,28 @@ function Field({ field: f, value, error, onChange, disabled }: {
   const multi = f.type === "checkbox";
   const arr = Array.isArray(value) ? value : [];
   return (
-    <fieldset id={id} style={{ border: 0, padding: 0, margin: 0 }} aria-describedby={error ? errId : undefined} tabIndex={-1}>
-      <legend style={{ padding: 0 }}>{label}</legend>
-      {f.options?.map((o) => (
-        <label key={o} className="choice">
-          <input
-            type={multi ? "checkbox" : "radio"}
-            name={f.id}
-            value={o}
-            disabled={disabled}
-            checked={multi ? arr.includes(o) : str === o}
-            onChange={(e) => {
-              if (!multi) return onChange(o);
-              onChange(e.target.checked ? [...arr, o] : arr.filter((x) => x !== o));
-            }}
-          />
-          <span>{o}</span>
-        </label>
-      ))}
+    <fieldset id={id} className="field" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }} aria-describedby={error ? errId : undefined} tabIndex={-1}>
+      <legend style={{ padding: 0, marginBottom: 6 }}>{label}</legend>
+      {multi && <span className="hint" style={{ marginTop: -4 }}>Можно выбрать несколько</span>}
+      <div className="choices">
+        {f.options?.map((o) => (
+          <label key={o} className="choice">
+            <input
+              type={multi ? "checkbox" : "radio"}
+              name={f.id}
+              value={o}
+              disabled={disabled}
+              checked={multi ? arr.includes(o) : str === o}
+              onChange={(e) => {
+                if (!multi) return onChange(o);
+                onChange(e.target.checked ? [...arr, o] : arr.filter((x) => x !== o));
+              }}
+            />
+            <span className={`mark ${multi ? "check" : "radio"}`} />
+            <span>{o}</span>
+          </label>
+        ))}
+      </div>
       {err}
     </fieldset>
   );

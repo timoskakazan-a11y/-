@@ -11,17 +11,18 @@ export default async function LoginPage() {
   if (await isAdmin()) redirect("/admin");
   return (
     <main className="container" style={{ display: "grid", placeItems: "center", minHeight: "100dvh" }}>
-      <div className="card" style={{ width: "100%", maxWidth: 380 }}>
-        <div className="logo" style={{ marginBottom: 16 }}>
-          <span className="logo-mark">71</span>
-          <span>Админка медиацентра</span>
+      <div style={{ width: "100%", maxWidth: 360 }}>
+        <div className="brand" style={{ marginBottom: 24 }}>
+          <span className="brand-mark">71</span>
+          <span>Медиацентр 71</span>
         </div>
+        <h1 style={{ fontSize: "1.5rem", marginBottom: 20 }}>Вход в админку</h1>
         <ActionForm action={login} className="stack">
           <label className="field">
-            <span className="field-label">Пароль</span>
+            <span className="label">Пароль</span>
             <input className="input" type="password" name="password" required autoComplete="current-password" autoFocus />
           </label>
-          <SubmitButton pendingText="Проверяем…">Войти</SubmitButton>
+          <SubmitButton className="btn btn-primary btn-lg btn-block" pendingText="Проверяем…">Войти</SubmitButton>
         </ActionForm>
       </div>
     </main>

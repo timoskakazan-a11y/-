@@ -1,46 +1,35 @@
 import Link from "next/link";
 import { db } from "@/lib/supabase";
-import { fmtDateTime } from "@/lib/time";
+import { listFormsWithStats } from "@/lib/admin-data";
+import { FormListItem } from "@/components/FormListItem";
 
 export default async function Dashboard() {
-  const [forms, stats, events, albums] = await Promise.all([
-    db().from("forms").select("id,slug,title,is_open").order("created_at", { ascending: false }),
-    db().from("form_stats").select("form_id,responses,last_response_at"),
+  const [{ forms, error }, events, albums] = await Promise.all([
+    listFormsWithStats(),
     db().from("events").select("id", { count: "exact", head: true }).gte("starts_at", new Date().toISOString()),
     db().from("albums").select("id", { count: "exact", head: true }),
   ]);
-  const err = forms.error || stats.error;
-  const statMap = new Map((stats.data ?? []).map((s) => [s.form_id, s]));
+  const total = forms.reduce((s, f) => s + f.responses, 0);
 
   return (
-    <div className="stack">
-      <h1 style={{ fontSize: "2rem" }}>Обзор</h1>
-      {err && <div className="alert alert-err">Ошибка загрузки: {err.message}</div>}
-      <div className="grid">
-        <div className="card"><div className="muted small">Формы</div><div style={{ fontSize: "2rem", fontWeight: 800 }}>{forms.data?.length ?? "—"}</div></div>
-        <div className="card"><div className="muted small">Предстоящие мероприятия</div><div style={{ fontSize: "2rem", fontWeight: 800 }}>{events.count ?? "—"}</div></div>
-        <div className="card"><div className="muted small">Альбомы</div><div style={{ fontSize: "2rem", fontWeight: 800 }}>{albums.count ?? "—"}</div></div>
+    <div className="stack" style={{ gap: 24 }}>
+      <div className="page-head" style={{ marginBottom: 0 }}><h1>Обзор</h1></div>
+      {error && <div className="alert alert-err">Ошибка загрузки: {error.message}</div>}
+      <div className="stats">
+        <div className="stat"><b>{total}</b><span>ответов</span></div>
+        <Link href="/admin/events" className="stat"><b>{events.count ?? "—"}</b><span>событий впереди</span></Link>
+        <Link href="/admin/albums" className="stat"><b>{albums.count ?? "—"}</b><span>альбомов</span></Link>
       </div>
-      <h2 style={{ marginTop: 32 }}>Формы и ответы</h2>
-      <div className="table-wrap">
-        <table>
-          <thead><tr><th>Форма</th><th>Статус</th><th>Ответов</th><th>Последний ответ</th><th></th></tr></thead>
-          <tbody>
-            {(forms.data ?? []).map((f) => {
-              const s = statMap.get(f.id);
-              return (
-                <tr key={f.id}>
-                  <td><Link href={`/admin/forms/${f.id}`}>{f.title}</Link><div className="muted small">/f/{f.slug}</div></td>
-                  <td>{f.is_open ? <span className="badge badge-ok">открыта</span> : <span className="badge badge-muted">закрыта</span>}</td>
-                  <td><b>{s?.responses ?? 0}</b></td>
-                  <td className="small">{fmtDateTime(s?.last_response_at)}</td>
-                  <td><Link className="btn btn-sm btn-ghost" href={`/admin/forms/${f.id}/responses`}>Ответы</Link></td>
-                </tr>
-              );
-            })}
-            {forms.data?.length === 0 && <tr><td colSpan={5} className="muted">Форм пока нет</td></tr>}
-          </tbody>
-        </table>
+      <div>
+        <div className="section-head">
+          <h2>Формы</h2>
+          <Link href="/admin/forms" className="link">Все</Link>
+        </div>
+        {forms.length === 0 ? (
+          <div className="empty">Форм пока нет. <Link href="/admin/forms" className="link">Создать</Link></div>
+        ) : (
+          <div className="list">{forms.slice(0, 6).map((f) => <FormListItem key={f.id} f={f} />)}</div>
+        )}
       </div>
     </div>
   );
