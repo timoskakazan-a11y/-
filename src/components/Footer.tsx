@@ -8,7 +8,7 @@ export function Footer() {
         <span className="row" style={{ gap: 16 }}>
           {site.links.vk && <a href={site.links.vk} target="_blank" rel="noopener noreferrer">ВКонтакте</a>}
           {site.links.telegram && <a href={site.links.telegram} target="_blank" rel="noopener noreferrer">Telegram</a>}
-          <span>© {new Date().getFullYear()}</span>
+          <span>Сделано медиацентром · {new Date().getFullYear()}</span>
         </span>
       </div>
     </footer>

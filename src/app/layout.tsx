@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Caveat, Dela_Gothic_One, Golos_Text, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { site } from "@/lib/site";
 
-const sans = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-sans", display: "swap" });
+const display = Dela_Gothic_One({ weight: "400", subsets: ["latin", "cyrillic"], variable: "--f-display", display: "swap" });
+const sans = Golos_Text({ subsets: ["latin", "cyrillic"], variable: "--f-sans", display: "swap" });
+const mono = IBM_Plex_Mono({ weight: ["400", "500", "600"], subsets: ["latin", "cyrillic"], variable: "--f-mono", display: "swap" });
+const hand = Caveat({ subsets: ["latin", "cyrillic"], variable: "--f-hand", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: site.name, template: `%s — ${site.shortName}` },
@@ -12,16 +15,11 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
 };
 
-export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#111113" },
-  ],
-};
+export const viewport: Viewport = { themeColor: "#f3efe6" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className={sans.variable}>
+    <html lang="ru" className={`${display.variable} ${sans.variable} ${mono.variable} ${hand.variable}`}>
       <body>{children}</body>
     </html>
   );

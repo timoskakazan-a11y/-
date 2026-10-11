@@ -26,17 +26,23 @@ export default async function FormPage({ params }: Props) {
     <div className="container narrow form-page">
       {r.status === "ok" && <FormClient form={r.form} />}
       {r.status === "closed" && (
-        <div className="done">
-          <h1 className="form-title">{r.title}</h1>
-          <p className="muted" style={{ margin: "8px 0 24px" }}>Приём ответов на эту форму закрыт.</p>
-          <Link href="/" className="btn btn-secondary">На главную</Link>
+        <div className="blank">
+          <div className="blank-top"><span>Бланк</span><span>Архив</span></div>
+          <div className="done">
+            <div className="done-stamp" style={{ color: "var(--blue)", borderColor: "var(--blue)", animation: "none" }}>ЗАКРЫТО</div>
+            <p className="form-title" style={{ fontSize: "1.5rem", maxWidth: "none", margin: "28px auto 0" }}>{r.title}</p>
+            <p className="form-note" style={{ margin: "6px 0 24px" }}>приём ответов закончился</p>
+            <Link href="/" className="btn btn-secondary">На главную</Link>
+          </div>
         </div>
       )}
       {r.status === "error" && (
-        <div className="done">
-          <h1 className="form-title">Не удалось загрузить форму</h1>
-          <p className="muted" style={{ margin: "8px 0 24px" }}>Похоже, временный сбой связи. Попробуйте обновить страницу.</p>
-          <RetryButton />
+        <div className="blank">
+          <div className="done">
+            <p className="form-title" style={{ fontSize: "1.6rem", maxWidth: "none" }}>Не удалось загрузить форму</p>
+            <p className="form-note" style={{ margin: "8px 0 24px" }}>похоже, сбой связи — обновите страницу</p>
+            <RetryButton />
+          </div>
         </div>
       )}
     </div>

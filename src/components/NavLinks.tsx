@@ -3,8 +3,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
-  { href: "/events", label: "События" },
-  { href: "/albums", label: "Фотоархив" },
+  { href: "/events", label: "Афиша" },
+  { href: "/albums", label: "Плёнка" },
   { href: "/about", label: "О нас" },
 ];
 

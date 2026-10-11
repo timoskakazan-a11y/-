@@ -15,10 +15,10 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     <>
       <header className="admin-top">
         <div className="container">
-          <Link href="/admin" className="brand">
-            <span className="brand-mark">71</span>
-            <span>Админка</span>
+          <Link href="/admin" className="wordmark" style={{ fontSize: "1.2rem" }}>
+            МЕДИА<b>71</b>
           </Link>
+          <span className="kicker" style={{ marginLeft: 4 }}>редакция</span>
           <AdminNav />
           <span className="spacer" />
           <Link href="/" target="_blank" className="btn btn-ghost btn-icon" title="Открыть сайт" aria-label="Открыть сайт">
