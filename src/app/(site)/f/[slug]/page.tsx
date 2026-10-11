@@ -23,22 +23,22 @@ export default async function FormPage({ params }: Props) {
   if (r.status === "not_found") notFound();
 
   return (
-    <div className="container narrow form-page">
+    <div className="fx-page"><div className="container narrow" style={{ maxWidth: 600 }}>
       {r.status === "ok" && <FormClient form={r.form} />}
       {r.status === "closed" && (
-        <div className="done">
+        <div className="fx-card fx-done">
           <h1 style={{ fontSize: 28 }}>{r.title}</h1>
           <p className="muted" style={{ margin: "8px 0 28px" }}>Приём ответов на эту форму закрыт</p>
           <Link href="/" className="btn btn-secondary">На главную</Link>
         </div>
       )}
       {r.status === "error" && (
-        <div className="done">
+        <div className="fx-card fx-done">
           <h1 style={{ fontSize: 28 }}>Не удалось загрузить форму</h1>
           <p className="muted" style={{ margin: "8px 0 28px" }}>Похоже, сбой связи. Попробуйте обновить страницу.</p>
           <RetryButton />
         </div>
       )}
-    </div>
+    </div></div>
   );
 }

@@ -139,24 +139,31 @@ export function FormClient({ form }: { form: PublicForm }) {
 
   if (phase === "done") {
     return (
-      <div className="done" role="status">
-        <div className="done-icon"><Icon name="check" size={40} /></div>
-        <h1 style={{ fontSize: 28 }}>{form.success_text}</h1>
-        <p className="muted" style={{ marginTop: 8 }}>{form.title}</p>
-        <button className="btn btn-secondary" style={{ marginTop: 28 }} onClick={again}>Отправить ещё один ответ</button>
+      <div className="fx-card fx-done" role="status">
+        <div className="fx-done-icon"><Icon name="check" size={30} weight={2.6} /></div>
+        <h1 className="fx-title" style={{ textAlign: "center" }}>{form.success_text}</h1>
+        <p className="fx-desc" style={{ textAlign: "center" }}>{form.title}</p>
+        <button className="fx-submit fx-submit-ghost" onClick={again}>Отправить ещё один ответ</button>
       </div>
     );
   }
 
   const busy = phase === "sending" || phase === "retrying" || phase === "offline";
+  const hasAnswers = Object.values(answers).some((v) => (Array.isArray(v) ? v.length : v));
 
   return (
-    <form onSubmit={onSubmit} noValidate>
-      <header className="form-cover">
-        <span className="hero-eyebrow"><Icon name="lock" size={13} /> Анонимно</span>
-        <h1 className="form-title">{form.title}</h1>
-        {form.description && <p className="form-desc">{form.description}</p>}
-      </header>
+    <form onSubmit={onSubmit} noValidate className="fx-card">
+      <div className="fx-bar">
+        <span className="fx-bar-item"><Icon name="lock" size={15} /> Анонимно</span>
+        {hasAnswers && !busy && (
+          <button type="button" className="fx-bar-item fx-bar-btn" onClick={again}>
+            <Icon name="eraser" size={16} /> Очистить
+          </button>
+        )}
+      </div>
+
+      <h1 className="fx-title">{form.title}</h1>
+      {form.description && <p className="fx-desc">{form.description}</p>}
 
       {/* Скрытое поле-ловушка для ботов */}
       <div className="visually-hidden" aria-hidden>
@@ -166,23 +173,20 @@ export function FormClient({ form }: { form: PublicForm }) {
         </label>
       </div>
 
-      <div className="questions">
+      <div className="fx-fields">
         {form.fields.map((f) => (
-          <div key={f.id} className="question">
-            <Field field={f} value={answers[f.id]} error={errors[f.id]} onChange={(v) => set(f.id, v)} disabled={busy} />
-          </div>
+          <Field key={f.id} field={f} value={answers[f.id]} error={errors[f.id]} onChange={(v) => set(f.id, v)} disabled={busy} />
         ))}
       </div>
 
-      <div className="form-actions">
-        {message && <div className="alert alert-err" role="alert">{message}</div>}
-        {phase === "retrying" && <div className="alert alert-info">Связь нестабильна — пробуем отправить ещё раз…</div>}
-        {phase === "offline" && <div className="alert alert-info">Нет интернета. Ответ отправится сам, когда связь появится.</div>}
-        <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={busy}>
-          {busy ? "Отправляем…" : "Отправить"}
-        </button>
-        <p className="form-note">Имя и IP-адрес не сохраняются</p>
-      </div>
+      {message && <div className="alert alert-err" role="alert" style={{ marginTop: 20 }}>{message}</div>}
+      {phase === "retrying" && <div className="alert alert-info" style={{ marginTop: 20 }}>Связь нестабильна — пробуем отправить ещё раз…</div>}
+      {phase === "offline" && <div className="alert alert-info" style={{ marginTop: 20 }}>Нет интернета. Ответ отправится сам, когда связь появится.</div>}
+
+      <button type="submit" className="fx-submit" disabled={busy}>
+        {busy ? "Отправляем…" : "Отправить"}
+      </button>
+      <p className="fx-note">Имя и IP-адрес не сохраняются</p>
     </form>
   );
 }
@@ -196,86 +200,94 @@ function Field({ field: f, value, error, onChange, disabled }: {
 }) {
   const id = `f-${f.id}`;
   const errId = `${id}-err`;
-  const common = {
-    id,
-    "aria-invalid": error ? true : undefined,
-    "aria-describedby": error ? errId : undefined,
-    "aria-required": f.required || undefined,
-    disabled,
-  };
-  const label = (
-    <span className="label">
+  const str = typeof value === "string" ? value : "";
+  const legend = (
+    <span className="fx-legend">
       {f.label}
       {f.required && <span className="req" aria-hidden>*</span>}
     </span>
   );
-  const err = error ? <div id={errId} className="field-error">{error}</div> : null;
-  const str = typeof value === "string" ? value : "";
+  const err = error ? <div id={errId} className="fx-error">{error}</div> : null;
+  const aria = {
+    "aria-invalid": error ? true : undefined,
+    "aria-describedby": error ? errId : undefined,
+    "aria-required": f.required || undefined,
+  };
 
+  // текст: поле с рамкой и подписью, врезанной в рамку
   if (f.type === "text" || f.type === "textarea") {
     const limit = maxLen(f);
     return (
-      <label className="field" htmlFor={id}>
-        {label}
-        {f.type === "text" ? (
-          <input {...common} className="input" value={str} maxLength={limit} placeholder={f.placeholder ?? "Ваш ответ"} onChange={(e) => onChange(e.target.value)} />
-        ) : (
-          <textarea {...common} className="textarea" value={str} maxLength={limit} placeholder={f.placeholder ?? "Ваш ответ"} onChange={(e) => onChange(e.target.value)} />
-        )}
+      <div className="fx-item">
+        <label className={`fx-box${error ? " invalid" : ""}`} htmlFor={id}>
+          <span className="fx-main">
+          {legend}
+          {f.type === "text" ? (
+            <input id={id} {...aria} disabled={disabled} className="fx-input" value={str} maxLength={limit}
+              placeholder={f.placeholder ?? "Ваш ответ"} onChange={(e) => onChange(e.target.value)} />
+          ) : (
+            <textarea id={id} {...aria} disabled={disabled} className="fx-input fx-textarea" value={str} maxLength={limit}
+              placeholder={f.placeholder ?? "Ваш ответ"} onChange={(e) => onChange(e.target.value)} />
+          )}
+          </span>
+          {str && !disabled && (
+            <button type="button" className="fx-clear" onClick={(e) => { e.preventDefault(); onChange(""); }} aria-label="Очистить поле"><Icon name="x" size={14} weight={2.6} /></button>
+          )}
+        </label>
         {str.length > limit * 0.8 && <div className="counter">{str.length} / {limit}</div>}
         {err}
-      </label>
+      </div>
     );
   }
 
+  // выпадающий список: выбранное значение — чипсом, нативный выбор поверх
   if (f.type === "select") {
     return (
-      <label className="field" htmlFor={id}>
-        {label}
-        <select {...common} className="select" value={str} onChange={(e) => onChange(e.target.value)}>
-          <option value="">Выберите…</option>
-          {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
+      <div className="fx-item">
+        <div className={`fx-box fx-select${error ? " invalid" : ""}`}>
+          <span className="fx-main">
+            {legend}
+            <span className="fx-value">
+              {str ? <span className="fx-tag">{str}</span> : <span className="fx-placeholder">Выберите</span>}
+            </span>
+          </span>
+          {str && !disabled && (
+            <button type="button" className="fx-clear" onClick={() => onChange("")} aria-label="Сбросить выбор"><Icon name="x" size={14} weight={2.6} /></button>
+          )}
+          <span className="fx-chevron" aria-hidden><Icon name="down" size={18} /></span>
+          <select id={id} {...aria} disabled={disabled} className="fx-native" value={str} onChange={(e) => onChange(e.target.value)}>
+            <option value="">Выберите</option>
+            {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </div>
         {err}
-      </label>
+      </div>
     );
   }
 
+  // варианты: контурные капсулы, выбранные — голубые с галочкой
   const multi = f.type === "checkbox";
   const arr = Array.isArray(value) ? value : [];
-  const opts = f.options ?? [];
-  // короткие варианты — чипсами, длинные — строками со значком справа
-  const asChips = opts.length <= 12 && opts.every((o) => o.length <= 28);
-  const toggle = (o: string, checked: boolean) => {
-    if (!multi) return onChange(o);
-    onChange(checked ? [...arr, o] : arr.filter((x) => x !== o));
-  };
   return (
-    <fieldset id={id} className="field" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }} aria-describedby={error ? errId : undefined} tabIndex={-1}>
-      <legend style={{ padding: 0, marginBottom: 2 }}>{label}</legend>
-      {multi && <span className="hint">Можно выбрать несколько</span>}
-      {asChips ? (
-        <div className="choice-chips" style={{ marginTop: 6 }}>
-          {opts.map((o) => (
-            <label key={o} className="choice-chip">
-              <input type={multi ? "checkbox" : "radio"} name={f.id} value={o} disabled={disabled}
-                checked={multi ? arr.includes(o) : str === o} onChange={(e) => toggle(o, e.target.checked)} />
+    <fieldset id={id} className={`fx-item fx-group${error ? " invalid" : ""}`} aria-describedby={error ? errId : undefined} tabIndex={-1}>
+      <legend className="fx-group-label">
+        {f.label}
+        {f.required && <span className="req" aria-hidden>*</span>}
+        {multi && <span className="fx-hint"> · можно несколько</span>}
+      </legend>
+      <div className="fx-pills">
+        {f.options?.map((o) => {
+          const checked = multi ? arr.includes(o) : str === o;
+          return (
+            <label key={o} className={`fx-pill${checked ? " on" : ""}`}>
+              <input type={multi ? "checkbox" : "radio"} name={f.id} value={o} disabled={disabled} checked={checked}
+                onChange={(e) => (multi ? onChange(e.target.checked ? [...arr, o] : arr.filter((x) => x !== o)) : onChange(o))} />
+              {checked && <Icon name="check" size={16} weight={2.6} />}
               <span>{o}</span>
             </label>
-          ))}
-        </div>
-      ) : (
-        <div className="choices" style={{ marginTop: 6 }}>
-          {opts.map((o) => (
-            <label key={o} className="choice">
-              <input type={multi ? "checkbox" : "radio"} name={f.id} value={o} disabled={disabled}
-                checked={multi ? arr.includes(o) : str === o} onChange={(e) => toggle(o, e.target.checked)} />
-              <span className={`mark ${multi ? "check" : "radio"}`} />
-              <span>{o}</span>
-            </label>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
       {err}
     </fieldset>
   );
