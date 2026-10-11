@@ -498,3 +498,11 @@ details.disclose.card > summary { color: var(--blue); font-weight: 600; min-heig
 .clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .folder-meta { align-items: flex-start; }
 .folder-meta .badge { margin-top: 1px; }
+
+/* логотип */
+.logo { display: inline-flex; align-items: center; gap: 10px; }
+.logo svg { flex: none; }
+.logo-words { display: flex; flex-direction: column; line-height: 1.1; }
+.logo-title { font-size: 16px; font-weight: 750; letter-spacing: -0.025em; color: var(--label); }
+.logo-sub { font-size: 12px; font-weight: 500; color: var(--label-2); letter-spacing: -0.005em; margin-top: 1px; }
+@media (max-width: 400px) { .navbar .logo-words { display: none; } }

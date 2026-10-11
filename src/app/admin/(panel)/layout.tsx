@@ -5,6 +5,7 @@ import { isDbConfigured } from "@/lib/supabase";
 import { logout } from "../actions";
 import { AdminNav, AdminTabbar } from "@/components/AdminNav";
 import { Icon } from "@/components/Icon";
+import { Logo } from "@/components/Logo";
 
 export const metadata: Metadata = { title: "Админка", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -15,9 +16,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     <>
       <header className="admin-top">
         <div className="container">
-          <Link href="/admin" className="logo">
-            <span className="logo-mark">71</span>
-            <span>Редакция</span>
+          <Link href="/admin" aria-label="Редакция медиацентра">
+            <Logo title="Редакция" sub="медиацентр 71" />
           </Link>
           <AdminNav />
           <span className="spacer" />

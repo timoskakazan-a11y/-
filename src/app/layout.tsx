@@ -6,6 +6,7 @@ import { site } from "@/lib/site";
 const sans = Onest({ subsets: ["latin", "cyrillic"], variable: "--font-sans", display: "swap" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000"),
   title: { default: site.name, template: `%s — ${site.shortName}` },
   description: site.description,
   openGraph: { title: site.name, description: site.description, locale: "ru_RU", type: "website" },
