@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "О нас" };
 
 const directions: { icon: IconName; t: string; d: string }[] = [
   { icon: "camera", t: "Фото", d: "Репортажи с праздников и линеек" },
-  { icon: "asterisk", t: "Видео", d: "Ролики и трансляции концертов" },
+  { icon: "asterisk", t: "События", d: "Праздники, акции, дискотеки" },
   { icon: "mic", t: "Тексты", d: "Новости, интервью, посты" },
   { icon: "music", t: "Музыка", d: "Плейлисты из ваших заявок" },
 ];
@@ -14,10 +14,9 @@ const directions: { icon: IconName; t: string; d: string }[] = [
 export default function AboutPage() {
   return (
     <div className="container page">
-      <h1 className="title-xl">Команда</h1>
+      <h1 className="title-xl">Кто мы</h1>
       <p className="page-lead">
-        Ученики и педагоги школы №71, которые рассказывают о жизни школы — так, чтобы её
-        хотелось запомнить.
+        Ученики школы №71, которые придумывают и проводят школьные события и рассказывают о них — так, чтобы школу хотелось запомнить.
       </p>
 
       <div className="tiles" style={{ marginTop: 32 }}>
@@ -32,7 +31,7 @@ export default function AboutPage() {
       <div className="card" style={{ marginTop: 32 }}>
         <h2>Хочешь в команду?</h2>
         <p className="muted" style={{ marginTop: 8 }}>
-          Неважно, умеешь ли ты снимать — научим. Подойди к руководителю медиацентра или напиши нам.
+          Неважно, умеешь ли ты снимать — научим. Подойди к нам на перемене или напиши в сообщество.
         </p>
         <p className="xs muted" style={{ marginTop: 16 }}>{site.address}</p>
       </div>

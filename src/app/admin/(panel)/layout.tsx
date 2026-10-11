@@ -16,8 +16,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     <>
       <header className="admin-top">
         <div className="container">
-          <Link href="/admin" aria-label="Редакция медиацентра">
-            <Logo title="Редакция" sub="медиацентр 71" />
+          <Link href="/admin" aria-label="Редакция инициативной группы">
+            <Logo title="Редакция" sub="Инициативная группа 71" />
           </Link>
           <AdminNav />
           <span className="spacer" />

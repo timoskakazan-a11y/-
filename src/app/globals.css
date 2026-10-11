@@ -503,9 +503,10 @@ details.disclose.card > summary { color: var(--blue); font-weight: 600; min-heig
 .logo { display: inline-flex; align-items: center; gap: 10px; }
 .logo svg { flex: none; }
 .logo-words { display: flex; flex-direction: column; line-height: 1.1; }
-.logo-title { font-size: 16px; font-weight: 750; letter-spacing: -0.025em; color: var(--label); }
-.logo-sub { font-size: 12px; font-weight: 500; color: var(--label-2); letter-spacing: -0.005em; margin-top: 1px; }
-@media (max-width: 639px) { .navbar .logo-words { display: none; } }
+.logo-title { font-size: 16px; font-weight: 750; letter-spacing: -0.025em; color: var(--label); white-space: nowrap; }
+.logo-sub { font-size: 12px; font-weight: 500; color: var(--label-2); letter-spacing: -0.005em; margin-top: 1px; white-space: nowrap; }
+.logo svg { display: block; border-radius: 3px; }
+@media (max-width: 719px) { .navbar .logo-words { display: none; } }
 .navbar .container > a { flex: none; }
 
 /* =========================================================
@@ -577,3 +578,7 @@ input[type="datetime-local"].cell-input, input[type="date"] { font-variant-numer
 /* iOS приближает поле при фокусе, если шрифт меньше 16px */
 .type-select, .sheet-search input { font-size: 16px; }
 @media (max-width: 559px) { .type-select { font-size: 16px; height: 34px; } }
+.hero-split { display: flex; align-items: center; justify-content: space-between; gap: var(--s10); }
+.hero-logo { display: none; flex: none; }
+@media (min-width: 900px) { .hero-logo { display: block; } }
+.title-xl { text-wrap: balance; }

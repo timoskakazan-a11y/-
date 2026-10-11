@@ -5,6 +5,7 @@ import { AlbumCard } from "@/components/AlbumCard";
 import { Unavailable } from "@/components/Unavailable";
 import { Icon } from "@/components/Icon";
 import { site } from "@/lib/site";
+import { LogoFull } from "@/components/Logo";
 
 export const revalidate = 60;
 
@@ -13,12 +14,15 @@ export default async function Home() {
 
   return (
     <div className="container">
-      <section className="hero">
-        <p className="muted" style={{ fontSize: 15, fontWeight: 500 }}>{site.school}</p>
-        <h1 className="title-xl" style={{ marginTop: 8 }}>Медиацентр 71</h1>
-        <p className="hero-lead">
-          Снимаем праздники и линейки, ведём школьные соцсети и собираем музыку для дискотек.
-        </p>
+      <section className="hero hero-split">
+        <div>
+          <p className="muted" style={{ fontSize: 15, fontWeight: 500 }}>{site.school}</p>
+          <h1 className="title-xl" style={{ marginTop: 8 }}>Инициативная группа&nbsp;71</h1>
+          <p className="hero-lead">
+            Придумываем и проводим школьные события, снимаем праздники, ведём соцсети и собираем музыку для дискотек.
+          </p>
+        </div>
+        <div className="hero-logo"><LogoFull height={260} /></div>
       </section>
 
       <nav className="tiles" aria-label="Разделы" style={{ marginTop: 24 }}>

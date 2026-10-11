@@ -11,7 +11,7 @@ export default async function EventsPage() {
   return (
     <div className="container page">
       <h1 className="title-xl">События</h1>
-      <p className="page-lead">Ближайшие мероприятия школы, которые снимает медиацентр.</p>
+      <p className="page-lead">Ближайшие события школы. Приходите — будет интересно.</p>
       <div style={{ marginTop: 28 }}>
         {events === null ? (
           <Unavailable />
