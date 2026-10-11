@@ -37,8 +37,8 @@
 
 ## Безопасность
 
-- В Supabase включён RLS **без единой политики**: публичный ключ не может
-  ни читать, ни писать. Работает только сервер сайта с `service_role` ключом.
+- В Supabase включён RLS: публичный ключ без секрета сервера не может
+  ни читать, ни писать. Секрет знает только сервер сайта (переменная в Vercel).
 - Ответы проверяются на сервере по описанию формы: лишние поля
   отбрасываются, варианты сверяются со списком, длина ограничена.
 - Админка: пароль + подписанная httpOnly cookie, проверка и в `proxy.ts`,
@@ -54,21 +54,29 @@
 ## Установка
 
 ### 1. Supabase
-1. Создайте проект на [supabase.com](https://supabase.com) (регион — Europe, например Frankfurt).
-2. **SQL Editor → New query** → вставьте содержимое `supabase/schema.sql` → **Run**.
-   Скрипт можно запускать повторно — он ничего не сломает.
-3. **Project Settings → API**: скопируйте `Project URL` и ключ `service_role`.
+1. Создайте проект на [supabase.com](https://supabase.com) (регион Frankfurt, `eu-central-1`).
+2. **SQL Editor** → выполните по очереди `supabase/schema.sql` и `supabase/server_access.sql`.
+   Скрипты можно запускать повторно (сначала schema, потом server_access).
+3. Возьмите `Project URL` и публичный ключ (Project Settings → API), а секрет сервера —
+   запросом `select secret from private.server_secret;`.
+
+**Как устроен доступ.** Сервер сайта ходит в Supabase с публичным ключом и секретным
+заголовком `x-mc71-key`. Политики RLS пропускают к данным только запросы с верным
+секретом, а сам секрет лежит в схеме `private`, недоступной через API. Без секрета
+публичный ключ не видит ни одной строки. Вместо этого можно задать
+`SUPABASE_SERVICE_ROLE_KEY` — тогда секрет не нужен.
 
 ### 2. Переменные окружения (Vercel → Project → Settings → Environment Variables)
 
 | Переменная | Значение |
 |---|---|
 | `SUPABASE_URL` | Project URL из Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | ключ `service_role` (секретный!) |
+| `SUPABASE_ANON_KEY` | публичный ключ (`sb_publishable_...`) |
+| `SUPABASE_SERVER_SECRET` | значение из `private.server_secret` |
 | `ADMIN_PASSWORD` | пароль для входа в `/admin` (длинный) |
 | `SESSION_SECRET` | случайная строка ≥ 32 символов (`openssl rand -hex 32`) |
 
-После добавления переменных сделайте **Redeploy**.
+После изменения переменных сделайте **Redeploy**.
 
 ### 3. Локальный запуск
 ```bash

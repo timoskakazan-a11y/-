@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { db, isDbConfigured, withRetry } from "@/lib/supabase";
+import { db, isDbConfigured, submitRpcName, withRetry } from "@/lib/supabase";
 import { fieldsSchema, validateAnswers } from "@/lib/forms";
 import { ipHash } from "@/lib/security";
 
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ slug: stri
     const hash = await ipHash();
     // Повтор безопасен: благодаря token запись не задвоится
     const status = await withRetry(async () => {
-      const { data, error: rpcErr } = await db().rpc("submit_form_response", {
+      const { data, error: rpcErr } = await db().rpc(submitRpcName(), {
         p_slug: slug,
         p_data: check.data,
         p_client_token: parsed.token,

@@ -34,8 +34,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             <p className="muted">Вход выполнен. Чтобы управлять формами, мероприятиями и альбомами, подключите Supabase:</p>
             <ol style={{ paddingLeft: 20, margin: 0 }}>
               <li>Создайте проект на supabase.com (регион Frankfurt).</li>
-              <li>SQL Editor → вставьте файл <code>supabase/schema.sql</code> из репозитория → Run.</li>
-              <li>В Vercel → Settings → Environment Variables добавьте <code>SUPABASE_URL</code> и <code>SUPABASE_SERVICE_ROLE_KEY</code>, затем Redeploy.</li>
+              <li>SQL Editor → выполните <code>supabase/schema.sql</code>, затем <code>supabase/server_access.sql</code>.</li>
+              <li>В Vercel → Settings → Environment Variables добавьте <code>SUPABASE_URL</code>, <code>SUPABASE_ANON_KEY</code> и <code>SUPABASE_SERVER_SECRET</code> (значение из <code>private.server_secret</code>), затем Redeploy.</li>
             </ol>
           </div>
         )}
