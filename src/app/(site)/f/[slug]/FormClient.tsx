@@ -139,32 +139,24 @@ export function FormClient({ form }: { form: PublicForm }) {
 
   if (phase === "done") {
     return (
-      <div className="blank">
-        <div className="blank-top"><span>Бланк · {form.slug}</span><span>Принят</span></div>
-        <div className="done" role="status">
-          <div className="done-stamp">ПРИНЯТО</div>
-          <p className="form-title" style={{ fontSize: "1.5rem", maxWidth: "none", margin: "28px auto 0" }}>{form.success_text}</p>
-          <p className="form-note" style={{ marginTop: 6 }}>{form.title}</p>
-          <button className="btn btn-secondary" style={{ marginTop: 24 }} onClick={again}>Заполнить ещё раз</button>
-        </div>
+      <div className="done" role="status">
+        <div className="done-icon"><Icon name="check" size={40} /></div>
+        <h1 style={{ fontSize: 28 }}>{form.success_text}</h1>
+        <p className="muted" style={{ marginTop: 8 }}>{form.title}</p>
+        <button className="btn btn-secondary" style={{ marginTop: 28 }} onClick={again}>Отправить ещё один ответ</button>
       </div>
     );
   }
 
   const busy = phase === "sending" || phase === "retrying" || phase === "offline";
-  const today = new Date().toLocaleDateString("ru-RU");
 
   return (
-    <form onSubmit={onSubmit} noValidate className="blank">
-      <div className="blank-top"><span>Бланк · {form.slug}</span><span>{today}</span></div>
-      <div className="blank-head">
-        <span className="stamp" aria-hidden>АНОНИМНО</span>
+    <form onSubmit={onSubmit} noValidate>
+      <header className="form-cover">
+        <span className="hero-eyebrow"><Icon name="lock" size={13} /> Анонимно</span>
         <h1 className="form-title">{form.title}</h1>
         {form.description && <p className="form-desc">{form.description}</p>}
-        <p className="kicker" style={{ marginTop: 14, display: "flex", gap: 6, alignItems: "center" }}>
-          <Icon name="lock" size={13} /> Имя и IP-адрес не сохраняются
-        </p>
-      </div>
+      </header>
 
       {/* Скрытое поле-ловушка для ботов */}
       <div className="visually-hidden" aria-hidden>
@@ -186,10 +178,10 @@ export function FormClient({ form }: { form: PublicForm }) {
         {message && <div className="alert alert-err" role="alert">{message}</div>}
         {phase === "retrying" && <div className="alert alert-info">Связь нестабильна — пробуем отправить ещё раз…</div>}
         {phase === "offline" && <div className="alert alert-info">Нет интернета. Ответ отправится сам, когда связь появится.</div>}
-        <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={busy}>
-          {busy ? "Отправляем…" : "Отправить →"}
+        <button type="submit" className="btn btn-brand btn-lg btn-block" disabled={busy}>
+          {busy ? "Отправляем…" : "Отправить"}
         </button>
-        {form.fields.some((f) => f.required) && <span className="form-note"><span className="req" style={{ marginLeft: 0 }}>*</span> — обязательно</span>}
+        <p className="form-note">Имя и IP-адрес не сохраняются</p>
       </div>
     </form>
   );
@@ -226,9 +218,9 @@ function Field({ field: f, value, error, onChange, disabled }: {
       <label className="field" htmlFor={id}>
         {label}
         {f.type === "text" ? (
-          <input {...common} className="input" value={str} maxLength={limit} placeholder={f.placeholder ?? "Пиши здесь"} onChange={(e) => onChange(e.target.value)} />
+          <input {...common} className="input" value={str} maxLength={limit} placeholder={f.placeholder ?? "Ваш ответ"} onChange={(e) => onChange(e.target.value)} />
         ) : (
-          <textarea {...common} className="textarea" value={str} maxLength={limit} placeholder={f.placeholder ?? "Пиши здесь"} onChange={(e) => onChange(e.target.value)} />
+          <textarea {...common} className="textarea" value={str} maxLength={limit} placeholder={f.placeholder ?? "Ваш ответ"} onChange={(e) => onChange(e.target.value)} />
         )}
         {str.length > limit * 0.8 && <div className="counter">{str.length} / {limit}</div>}
         {err}

@@ -1,25 +1,31 @@
 import type { Metadata, Viewport } from "next";
-import { Caveat, Dela_Gothic_One, Golos_Text, IBM_Plex_Mono } from "next/font/google";
+import { Onest } from "next/font/google";
 import "./globals.css";
 import { site } from "@/lib/site";
 
-const display = Dela_Gothic_One({ weight: "400", subsets: ["latin", "cyrillic"], variable: "--f-display", display: "swap" });
-const sans = Golos_Text({ subsets: ["latin", "cyrillic"], variable: "--f-sans", display: "swap" });
-const mono = IBM_Plex_Mono({ weight: ["400", "500", "600"], subsets: ["latin", "cyrillic"], variable: "--f-mono", display: "swap" });
-const hand = Caveat({ subsets: ["latin", "cyrillic"], variable: "--f-hand", display: "swap" });
+const sans = Onest({ subsets: ["latin", "cyrillic"], variable: "--font-sans", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: site.name, template: `%s — ${site.shortName}` },
   description: site.description,
   openGraph: { title: site.name, description: site.description, locale: "ru_RU", type: "website" },
   formatDetection: { telephone: false },
+  appleWebApp: { capable: true, title: site.shortName, statusBarStyle: "default" },
 };
 
-export const viewport: Viewport = { themeColor: "#f3efe6" };
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f2f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className={`${display.variable} ${sans.variable} ${mono.variable} ${hand.variable}`}>
+    <html lang="ru" className={sans.variable}>
       <body>{children}</body>
     </html>
   );

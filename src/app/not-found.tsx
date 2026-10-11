@@ -7,10 +7,10 @@ export default function NotFound() {
     <>
       <Header />
       <main className="container narrow done">
-        <div className="done-stamp" style={{ animation: "none" }}>404</div>
-        <h1 style={{ fontSize: "2rem", marginTop: 28 }}>Кадр потерялся</h1>
-        <p className="form-note" style={{ margin: "8px 0 24px" }}>такой страницы нет — возможно, ссылка устарела</p>
-        <Link href="/" className="btn">На главную</Link>
+        <div style={{ fontSize: 64, fontWeight: 800, letterSpacing: "-0.04em", color: "var(--blue)" }}>404</div>
+        <h1 style={{ fontSize: 28, marginTop: 8 }}>Страница не найдена</h1>
+        <p className="muted" style={{ margin: "8px 0 28px" }}>Возможно, ссылка устарела или в ней опечатка.</p>
+        <Link href="/" className="btn btn-primary">На главную</Link>
       </main>
       <Footer />
     </>

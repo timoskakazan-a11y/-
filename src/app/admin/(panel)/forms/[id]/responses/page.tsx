@@ -2,13 +2,15 @@ import Link from "next/link";
 import { db } from "@/lib/supabase";
 import { loadForm, FormHeader } from "@/components/FormHeader";
 import { ActionForm, SubmitButton } from "@/components/ActionForm";
+import { SheetTable } from "@/components/SheetTable";
 import { Icon } from "@/components/Icon";
 import { fieldsSchema, type FormField } from "@/lib/forms";
-import { fmtDateTime } from "@/lib/time";
+import { fmtDateTime, fmtShort } from "@/lib/time";
 import { deleteRow } from "@/app/admin/actions";
 
 const PAGE = 30;
 const SUMMARY_LIMIT = 5000;
+const TABLE_PAGE = 2000;
 
 type Row = { id: string; data: Record<string, unknown>; created_at: string };
 
@@ -47,7 +49,7 @@ export default async function Responses({ params, searchParams }: {
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const view = sp.view === "list" ? "list" : "summary";
+  const view = sp.view === "list" ? "list" : sp.view === "table" ? "table" : "summary";
   const page = Math.max(1, Number(sp.page) || 1);
 
   const { form, responses } = await loadForm(id);
@@ -63,24 +65,34 @@ export default async function Responses({ params, searchParams }: {
       rows.push(...((r.data ?? []) as Row[]));
       if (!r.data || r.data.length < 1000) break;
     }
+  } else if (view === "table") {
+    const start = (page - 1) * TABLE_PAGE;
+    for (let from = start; from < start + TABLE_PAGE; from += 1000) {
+      const r = await db().from("form_responses").select("id,data,created_at").eq("form_id", id).order("created_at", { ascending: true }).range(from, Math.min(from + 999, start + TABLE_PAGE - 1));
+      if (r.error) { error = r.error.message; break; }
+      rows.push(...((r.data ?? []) as Row[]));
+      if (!r.data || r.data.length < 1000) break;
+    }
   } else {
     const r = await db().from("form_responses").select("id,data,created_at").eq("form_id", id).order("created_at", { ascending: false }).range((page - 1) * PAGE, page * PAGE - 1);
     if (r.error) error = r.error.message;
     rows = (r.data ?? []) as Row[];
   }
-  const pages = Math.max(1, Math.ceil(responses / PAGE));
-  const extraKeys = view === "list" ? [...new Set(rows.flatMap((r) => Object.keys(r.data ?? {})))].filter((k) => !fields.some((f) => f.id === k)) : [];
+  const pages = Math.max(1, Math.ceil(responses / (view === "table" ? TABLE_PAGE : PAGE)));
+  const extraKeys = view !== "summary" ? [...new Set(rows.flatMap((r) => Object.keys(r.data ?? {})))].filter((k) => !fields.some((f) => f.id === k)) : [];
 
   return (
     <div>
       <FormHeader form={form} responses={responses} active="responses" />
 
       <div className="row" style={{ marginBottom: 16 }}>
-        <div className="segmented" style={{ marginBottom: 0, flex: "1 1 220px" }}>
+        <div className="segmented" style={{ marginBottom: 0, flex: "1 1 260px", maxWidth: 420 }}>
           <Link href="?view=summary" aria-current={view === "summary" ? "page" : undefined}>Сводка</Link>
-          <Link href="?view=list" aria-current={view === "list" ? "page" : undefined}>Все ответы</Link>
+          <Link href="?view=table" aria-current={view === "table" ? "page" : undefined}>Таблица</Link>
+          <Link href="?view=list" aria-current={view === "list" ? "page" : undefined}>Карточки</Link>
         </div>
-        <a className="btn btn-secondary" href={`/api/admin/forms/${id}/export`}><Icon name="download" size={18} /> Excel</a>
+        <span className="spacer" />
+        <a className="btn btn-secondary btn-sm" style={{ height: 36 }} href={`/api/admin/forms/${id}/export`}><Icon name="download" size={16} /> Скачать Excel</a>
       </div>
 
       {error && <div className="alert alert-err" style={{ marginBottom: 12 }}>Ошибка загрузки: {error}</div>}
@@ -134,6 +146,30 @@ export default async function Responses({ params, searchParams }: {
         </div>
       )}
 
+      {responses > 0 && view === "table" && (
+        <>
+          <SheetTable
+            labels={[...fields.map((f) => f.label), ...extraKeys.map((k) => `${k} (удалённый вопрос)`)]}
+            rows={rows.map((r) => ({
+              id: r.id,
+              created: fmtShort(r.created_at),
+              cells: [...fields.map((f) => f.id), ...extraKeys].map((k) => {
+                const v = r.data?.[k];
+                return Array.isArray(v) ? v.join(", ") : typeof v === "string" ? v : "";
+              }),
+            }))}
+            deleteAction={deleteRow}
+          />
+          {pages > 1 && (
+            <div className="row" style={{ justifyContent: "center", marginTop: 16 }}>
+              {page > 1 && <Link className="btn btn-sm" href={`?view=table&page=${page - 1}`}>← Назад</Link>}
+              <span className="small muted">{page} из {pages}</span>
+              {page < pages && <Link className="btn btn-sm" href={`?view=table&page=${page + 1}`}>Дальше →</Link>}
+            </div>
+          )}
+        </>
+      )}
+
       {responses > 0 && view === "list" && (
         <>
           <div className="answers-grid">
@@ -168,9 +204,9 @@ export default async function Responses({ params, searchParams }: {
           </div>
           {pages > 1 && (
             <div className="row" style={{ justifyContent: "center", marginTop: 20 }}>
-              {page > 1 && <Link className="btn btn-secondary btn-sm" href={`?view=list&page=${page - 1}`}>← Новее</Link>}
+              {page > 1 && <Link className="btn btn-sm" href={`?view=list&page=${page - 1}`}>← Новее</Link>}
               <span className="small muted">{page} из {pages}</span>
-              {page < pages && <Link className="btn btn-secondary btn-sm" href={`?view=list&page=${page + 1}`}>Старше →</Link>}
+              {page < pages && <Link className="btn btn-sm" href={`?view=list&page=${page + 1}`}>Старше →</Link>}
             </div>
           )}
         </>

@@ -7,26 +7,24 @@ export function EventCard({ e }: { e: EventItem }) {
   const d = new Date(e.starts_at);
   const day = d.toLocaleDateString("ru-RU", { day: "numeric", timeZone: TZ });
   const month = d.toLocaleDateString("ru-RU", { month: "short", timeZone: TZ }).replace(".", "");
-  const time = d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
-  const weekday = d.toLocaleDateString("ru-RU", { weekday: "long", timeZone: TZ });
+  const when = d.toLocaleString("ru-RU", { weekday: "short", hour: "2-digit", minute: "2-digit", timeZone: TZ });
   const link = safeUrl(e.link_url);
   return (
-    <article className="ticket">
-      <div className="ticket-stub" aria-hidden>
+    <article className="event">
+      <div className="event-date" aria-hidden>
         <b>{day}</b>
         <span>{month}</span>
-        <i>{time}</i>
       </div>
-      <div className="ticket-body">
+      <div className="event-body">
         <h3>{e.title}</h3>
-        <div className="ticket-meta">
-          {weekday}, {time}
+        <div className="event-meta">
+          {when.charAt(0).toUpperCase() + when.slice(1)}
           {e.location ? ` · ${e.location}` : ""}
         </div>
         {e.description && <p>{e.description}</p>}
         {link && (
-          <a className="link" href={link} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: 12 }}>
-            Подробнее →
+          <a className="link" href={link} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: 8, fontSize: 15 }}>
+            Подробнее
           </a>
         )}
       </div>

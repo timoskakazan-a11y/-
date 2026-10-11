@@ -12,15 +12,15 @@ export default async function LoginPage() {
   return (
     <main className="container" style={{ display: "grid", placeItems: "center", minHeight: "100dvh" }}>
       <div style={{ width: "100%", maxWidth: 360 }}>
-        <div className="wordmark" style={{ marginBottom: 28 }}>МЕДИА<b>71</b></div>
-        <span className="kicker">Только для редакции</span>
-        <h1 style={{ fontSize: "2.2rem", margin: "6px 0 20px" }}>Вход</h1>
-        <ActionForm action={login} className="card stack">
+        <span className="logo-mark" style={{ width: 64, height: 64, borderRadius: 18, fontSize: 24, margin: "0 auto 20px" }}>71</span>
+        <h1 style={{ fontSize: 28, textAlign: "center" }}>Медиацентр 71</h1>
+        <p className="muted" style={{ textAlign: "center", margin: "6px 0 28px" }}>Вход для редакции</p>
+        <ActionForm action={login} className="stack">
           <label className="field">
             <span className="label">Пароль</span>
             <input className="input" type="password" name="password" required autoComplete="current-password" autoFocus />
           </label>
-          <SubmitButton className="btn btn-primary btn-lg btn-block" pendingText="Проверяем…">Войти</SubmitButton>
+          <SubmitButton className="btn btn-brand btn-lg btn-block" pendingText="Проверяем…">Войти</SubmitButton>
         </ActionForm>
       </div>
     </main>

@@ -21,3 +21,10 @@ export function fmtDateTime(iso: string | null | undefined) {
     day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Moscow",
   });
 }
+
+/** Короткий формат для таблиц: 11.10.2026 14:53 */
+export function fmtShort(iso: string) {
+  return new Date(iso).toLocaleString("ru-RU", {
+    day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Moscow",
+  }).replace(",", "");
+}
