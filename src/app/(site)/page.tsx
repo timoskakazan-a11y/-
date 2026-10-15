@@ -10,6 +10,17 @@ import { plural } from "@/components/FormListItem";
 
 export const revalidate = 60;
 
+function SoonTile({ n }: { n: number }) {
+  return (
+    <Link href="/events" className={`ig-tile ${n ? "ig-mint" : "ig-cream"}`}>
+      <Shape name={n ? "star" : "burst"} className="ig-tile-shape" size={170} />
+      <span className="ig-tile-label">Событие</span>
+      <h3>Скоро новый анонс</h3>
+      <span className="ig-tile-meta">Следите за афишей</span>
+    </Link>
+  );
+}
+
 function EventTile({ e, n }: { e: EventItem; n: number }) {
   const { day, month, time } = eventDate(e.starts_at);
   const look = lookFor(e.id, n);
@@ -17,8 +28,8 @@ function EventTile({ e, n }: { e: EventItem; n: number }) {
     <Link href="/events" className={`ig-tile ${look.color}`}>
       <Shape name={look.shape} className="ig-tile-shape" size={170} />
       <span className="ig-tile-label">Событие</span>
-      <h3>{e.title}</h3>
-      <span className="ig-tile-meta">{day} {month} · {time}{e.location ? ` · ${e.location}` : ""}</span>
+      <h3 className="ig-clamp" title={e.title}>{e.title}</h3>
+      <span className="ig-tile-meta ig-clamp-1">{day} {month} · {time}{e.location ? ` · ${e.location}` : ""}</span>
     </Link>
   );
 }
@@ -42,14 +53,14 @@ export default async function Home() {
         </section>
 
         <section className="ig-bento" aria-label="Коротко">
-          {ev[0] && <EventTile e={ev[0]} n={0} />}
+          {ev[0] ? <EventTile e={ev[0]} n={0} /> : <SoonTile n={0} />}
           <Link href="/events" className="ig-tile ig-blue ig-stat">
             <Shape name="burst" className="ig-tile-shape" size={170} />
             <span className="ig-tile-label">Афиша</span>
             <b>{ev.length}</b>
             <span>{plural(ev.length, "событие", "события", "событий")} впереди</span>
           </Link>
-          {ev[1] && <EventTile e={ev[1]} n={1} />}
+          {ev[1] ? <EventTile e={ev[1]} n={1} /> : <SoonTile n={1} />}
           <Link href="/albums" className="ig-tile ig-pink ig-stat">
             <Shape name="petals" className="ig-tile-shape" size={170} />
             <span className="ig-tile-label">Фотоархив</span>
