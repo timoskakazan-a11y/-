@@ -28,3 +28,28 @@ export function fmtShort(iso: string) {
     day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Moscow",
   }).replace(",", "");
 }
+
+/** "2026-10-17" → "17 октября" (с годом, если год не текущий) */
+export function fmtDay(date: string, withWeekday = false) {
+  const d = new Date(`${date}T12:00:00+03:00`);
+  const sameYear = d.getUTCFullYear() === new Date().getUTCFullYear();
+  return d.toLocaleDateString("ru-RU", {
+    day: "numeric", month: "long", ...(sameYear ? {} : { year: "numeric" }), ...(withWeekday ? { weekday: "short" } : {}), timeZone: "Europe/Moscow",
+  });
+}
+
+/** Срок сдачи: «31 октября, 18:00» */
+export function fmtDeadline(iso: string) {
+  return new Date(iso).toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Moscow" });
+}
+
+/** Сколько полных дней осталось до срока (0 — сегодня, отрицательное — просрочено) */
+export function daysLeft(iso: string) {
+  const day = (t: number) => Math.floor((t + 3 * 3600 * 1000) / 86400000);
+  return day(new Date(iso).getTime()) - day(Date.now());
+}
+
+/** Сегодняшняя дата по Казани: "2026-10-15" */
+export function todayLocal() {
+  return new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 10);
+}

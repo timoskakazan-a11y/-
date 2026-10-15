@@ -32,10 +32,10 @@ export function LogoFull({ height = 160, bg = INK, fg = PAPER }: { height?: numb
 }
 
 /** Знак + надпись для шапки */
-export function Logo({ title = "Инициативная группа", sub = "школы №71" }: { title?: string; sub?: string }) {
+export function Logo({ title = "Инициативная группа", sub = "школы №71", light }: { title?: string; sub?: string; light?: boolean }) {
   return (
     <span className="logo">
-      <LogoMark height={40} />
+      <LogoMark height={40} {...(light ? { bg: "#F4F2EE", fg: "#16161B" } : {})} />
       <span className="logo-words">
         <span className="logo-title">{title}</span>
         <span className="logo-sub">{sub}</span>

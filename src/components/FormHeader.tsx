@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/supabase";
 import { isAccepting } from "@/lib/admin-data";
+import { requireStaff } from "@/lib/auth";
 import { Icon } from "./Icon";
 import { plural } from "./FormListItem";
 
@@ -20,6 +21,7 @@ export type FullForm = {
 };
 
 export async function loadForm(id: string) {
+  await requireStaff("forms");
   if (!z.string().uuid().safeParse(id).success) notFound();
   const [{ data, error }, { count }] = await Promise.all([
     db().from("forms").select("id,slug,title,description,fields,is_open,closes_at,max_responses,success_text").eq("id", id).maybeSingle(),

@@ -1,3 +1,4 @@
+import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/supabase";
 import { deleteRow, saveAlbum } from "../../actions";
 import { ActionForm, SubmitButton } from "@/components/ActionForm";
@@ -30,6 +31,7 @@ function AlbumFields({ a }: { a?: Al }) {
 }
 
 export default async function AlbumsAdmin() {
+  await requireStaff("albums");
   const { data, error } = await db()
     .from("albums")
     .select("id,title,url,cover_url,album_date,is_published")

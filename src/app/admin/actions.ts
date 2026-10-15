@@ -5,9 +5,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db, isDbConfigured, withRetry } from "@/lib/supabase";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { ipHash, safeEqual } from "@/lib/security";
 import { SESSION_COOKIE, SESSION_TTL_SECONDS, createSessionToken } from "@/lib/session";
+import { codeHash, normalizeCode } from "@/lib/people";
 import { fieldsSchema } from "@/lib/forms";
 import { localToIso } from "@/lib/time";
 
@@ -35,6 +36,38 @@ const uuid = z.string().uuid();
 
 // ---------------- Вход / выход ----------------
 
+async function failsSince(filter: { ip?: string; subject?: string }, minutes = 15) {
+  const since = new Date(Date.now() - minutes * 60 * 1000).toISOString();
+  let q = db().from("admin_login_attempts").select("id", { count: "exact", head: true }).eq("success", false).gte("created_at", since);
+  if (filter.ip) q = q.eq("ip_hash", filter.ip);
+  if (filter.subject) q = q.eq("subject", filter.subject);
+  const { count, error } = await q;
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/** Журнал попыток не должен мешать входу: при сбое БД просто пропускаем */
+async function logAttempt(ip: string, success: boolean, subject: string | null) {
+  try {
+    await db().from("admin_login_attempts").insert({ ip_hash: ip, success, subject });
+  } catch (e) {
+    console.error("login attempts log", e);
+  }
+}
+
+async function setSession(token: string, maxAge: number) {
+  (await cookies()).set(SESSION_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge,
+  });
+}
+
+const slowDown = () => new Promise((r) => setTimeout(r, 700));
+
+/** Вход главного администратора по паролю из ADMIN_PASSWORD */
 export async function login(_: ActionResult, fd: FormData): Promise<ActionResult> {
   const password = String(fd.get("password") ?? "");
   const expected = process.env.ADMIN_PASSWORD;
@@ -43,40 +76,44 @@ export async function login(_: ActionResult, fd: FormData): Promise<ActionResult
   const hash = await ipHash();
   const dbReady = isDbConfigured();
   if (dbReady) try {
-    const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-    const { count } = await db()
-      .from("admin_login_attempts")
-      .select("id", { count: "exact", head: true })
-      .eq("ip_hash", hash)
-      .eq("success", false)
-      .gte("created_at", since);
-    if ((count ?? 0) >= 8) return fail("Слишком много попыток. Подождите 15 минут.");
+    if ((await failsSince({ ip: hash, subject: "owner" })) >= 8) return fail("Слишком много попыток. Подождите 15 минут.");
   } catch (e) {
     console.error("login attempts check", e);
   }
 
   const ok = safeEqual(password, expected);
-  // Журнал попыток не должен мешать входу: при сбое БД просто пропускаем
-  if (dbReady) {
-    try {
-      await db().from("admin_login_attempts").insert({ ip_hash: hash, success: ok });
-    } catch (e) {
-      console.error("login attempts log", e);
-    }
-  }
-
+  if (dbReady) await logAttempt(hash, ok, "owner");
   if (!ok) {
-    await new Promise((r) => setTimeout(r, 800));
+    await slowDown();
     return fail("Неверный пароль");
   }
+  await setSession(createSessionToken("owner", "owner"), SESSION_TTL_SECONDS);
+  redirect("/admin");
+}
 
-  (await cookies()).set(SESSION_COOKIE, createSessionToken(), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    path: "/",
-    maxAge: SESSION_TTL_SECONDS,
-  });
+/** Вход педагога или куратора по личному коду */
+export async function loginWithCode(_: ActionResult, fd: FormData): Promise<ActionResult> {
+  if (!isDbConfigured()) return fail("База данных ещё не подключена");
+  const raw = String(fd.get("code") ?? "");
+  if (normalizeCode(raw).length !== 8) return fail("Код — это 8 букв и цифр, например ABCD-2345");
+
+  const hash = await ipHash();
+  try {
+    if ((await failsSince({ ip: hash, subject: "staff" })) >= 20) return fail("Слишком много попыток. Подождите 15 минут.");
+  } catch (e) {
+    console.error("login attempts check", e);
+  }
+
+  const { data, error } = await db().from("staff").select("id,is_active").eq("code_hash", codeHash(raw)).maybeSingle();
+  if (error) return fail("Не получилось проверить код. Попробуйте ещё раз.");
+  const ok = !!data && data.is_active;
+  await logAttempt(hash, ok, "staff");
+  if (!ok) {
+    await slowDown();
+    return fail(data ? "Этот код отключён. Обратитесь к администратору." : "Неверный код");
+  }
+  await db().from("staff").update({ last_login_at: new Date().toISOString() }).eq("id", data.id);
+  await setSession(createSessionToken("staff", data.id), SESSION_TTL_SECONDS);
   redirect("/admin");
 }
 
@@ -101,7 +138,7 @@ const eventSchema = z.object({
 });
 
 export async function saveEvent(_: ActionResult, fd: FormData): Promise<ActionResult> {
-  await requireAdmin();
+  await requireStaff("events");
   const parsed = eventSchema.safeParse(Object.fromEntries(fd));
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Проверьте поля");
   const id = fd.get("id");
@@ -132,7 +169,7 @@ const albumSchema = z.object({
 });
 
 export async function saveAlbum(_: ActionResult, fd: FormData): Promise<ActionResult> {
-  await requireAdmin();
+  await requireStaff("albums");
   const parsed = albumSchema.safeParse(Object.fromEntries(fd));
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Проверьте поля");
   const id = fd.get("id");
@@ -154,12 +191,12 @@ export async function saveAlbum(_: ActionResult, fd: FormData): Promise<ActionRe
 
 // ---------------- Удаление ----------------
 
-const TABLES = { events: "/admin/events", albums: "/admin/albums", forms: "/admin/forms", form_responses: null } as const;
+const TABLES = { events: "events", albums: "albums", forms: "forms", form_responses: "forms" } as const;
 
 export async function deleteRow(_: ActionResult, fd: FormData): Promise<ActionResult> {
-  await requireAdmin();
   const table = String(fd.get("table")) as keyof typeof TABLES;
   if (!(table in TABLES)) return fail("Неизвестная таблица");
+  await requireStaff(TABLES[table]);
   const id = uuid.safeParse(fd.get("id"));
   if (!id.success) return fail("Неверный id");
   const { error } = await db().from(table).delete().eq("id", id.data);
@@ -179,7 +216,7 @@ const slugSchema = z
   .regex(/^[a-z0-9][a-z0-9-]{1,60}$/, "Адрес: только латиница, цифры и дефис (2–61 символ)");
 
 export async function createForm(_: ActionResult, fd: FormData): Promise<ActionResult> {
-  await requireAdmin();
+  await requireStaff("forms");
   const parsed = z
     .object({ title: z.string().trim().min(1, "Введите название").max(200), slug: slugSchema })
     .safeParse(Object.fromEntries(fd));
@@ -232,7 +269,7 @@ async function updateForm(id: string, patch: Record<string, unknown>): Promise<A
 }
 
 export async function saveFormFields(_: ActionResult, fd: FormData): Promise<ActionResult> {
-  await requireAdmin();
+  await requireStaff("forms");
   const parsed = z.object({ id: uuid, fields: fieldsJson }).safeParse(Object.fromEntries(fd));
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Проверьте вопросы");
   return updateForm(parsed.data.id, { fields: parsed.data.fields });
@@ -257,7 +294,7 @@ const formSettingsSchema = z.object({
 });
 
 export async function saveFormSettings(_: ActionResult, fd: FormData): Promise<ActionResult> {
-  await requireAdmin();
+  await requireStaff("forms");
   const parsed = formSettingsSchema.safeParse(Object.fromEntries(fd));
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Проверьте поля");
   const { id, ...rest } = parsed.data;
@@ -265,7 +302,7 @@ export async function saveFormSettings(_: ActionResult, fd: FormData): Promise<A
 }
 
 export async function toggleForm(_: ActionResult, fd: FormData): Promise<ActionResult> {
-  await requireAdmin();
+  await requireStaff("forms");
   const id = uuid.safeParse(fd.get("id"));
   if (!id.success) return fail("Неверный id");
   const open = fd.get("open") === "true";

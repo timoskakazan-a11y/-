@@ -1,3 +1,4 @@
+import { requireStaff } from "@/lib/auth";
 import Link from "next/link";
 import { createForm } from "../../actions";
 import { ActionForm, SubmitButton } from "@/components/ActionForm";
@@ -7,6 +8,7 @@ import { Icon } from "@/components/Icon";
 import { OpenNewOnHash } from "@/components/OpenNewOnHash";
 
 export default async function FormsAdmin({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
+  await requireStaff("forms");
   const { filter = "all" } = await searchParams;
   const { forms, error } = await listFormsWithStats();
   const open = forms.filter((f) => isAccepting(f, f.responses));

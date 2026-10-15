@@ -1,3 +1,4 @@
+import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/supabase";
 import { deleteRow, saveEvent } from "../../actions";
 import { ActionForm, SubmitButton } from "@/components/ActionForm";
@@ -32,6 +33,7 @@ function EventFields({ e }: { e?: Ev }) {
 }
 
 export default async function EventsAdmin() {
+  await requireStaff("events");
   const { data, error } = await db()
     .from("events")
     .select("id,title,description,starts_at,location,link_url,is_published")

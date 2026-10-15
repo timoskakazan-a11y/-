@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/supabase";
-import { isAdmin } from "@/lib/auth";
+import { can, getActor } from "@/lib/auth";
 import { fieldsSchema } from "@/lib/forms";
 import { fmtDateTime } from "@/lib/time";
 
@@ -16,7 +16,7 @@ function cell(v: unknown) {
 }
 
 export async function GET(_: Request, ctx: { params: Promise<{ id: string }> }) {
-  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!can(await getActor(), "forms")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await ctx.params;
   if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: "Not found" }, { status: 404 });
 

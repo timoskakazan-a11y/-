@@ -23,12 +23,13 @@ function colName(i: number) {
  * закреплённая шапка, выделение ячейки, строка просмотра (как строка формул),
  * навигация стрелками, копирование Ctrl/⌘+C и быстрый поиск.
  */
-export function SheetTable({ labels, rows, deleteAction }: {
+export function SheetTable({ labels, rows, deleteAction, firstLabel = "Время" }: {
   labels: string[];
   rows: Row[];
-  deleteAction: (prev: ActionResult, fd: FormData) => Promise<ActionResult>;
+  deleteAction?: (prev: ActionResult, fd: FormData) => Promise<ActionResult>;
+  firstLabel?: string;
 }) {
-  const columns = useMemo(() => ["Время", ...labels], [labels]);
+  const columns = useMemo(() => [firstLabel, ...labels], [labels, firstLabel]);
   const [query, setQuery] = useState("");
   const [sel, setSel] = useState<{ r: number; c: number } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -127,13 +128,13 @@ export function SheetTable({ labels, rows, deleteAction }: {
                   );
                 })}
                 <td className="act">
-                  <ActionForm action={deleteAction} confirm="Удалить этот ответ?" inline>
+                  {deleteAction && <ActionForm action={deleteAction} confirm="Удалить этот ответ?" inline>
                     <input type="hidden" name="table" value="form_responses" />
                     <input type="hidden" name="id" value={row.id} />
                     <SubmitButton className="btn btn-ghost btn-sm btn-icon sheet-del" pendingText="…" title="Удалить ответ">
                       <Icon name="trash" size={15} />
                     </SubmitButton>
-                  </ActionForm>
+                  </ActionForm>}
                 </td>
               </tr>
             ))}

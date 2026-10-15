@@ -1,19 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
+import { SESSION_COOKIE, readSessionToken } from "@/lib/session";
 
-// Первый рубеж: без валидной сессии в /admin не попасть.
-// Второй рубеж — requireAdmin() внутри каждого действия админки.
+// Первый рубеж: без подходящей сессии в админку и кабинет старосты не попасть.
+// Второй рубеж — requireStaff()/requireHead() внутри каждой страницы и действия.
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (pathname === "/admin/login") return withNoIndex(NextResponse.next());
+  if (pathname === "/admin/login" || pathname === "/s/login") return withNoIndex(NextResponse.next());
 
-  const ok = verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
+  const s = readSessionToken(req.cookies.get(SESSION_COOKIE)?.value);
+  const isHeadArea = pathname === "/s" || pathname.startsWith("/s/");
+  const ok = isHeadArea ? s?.role === "head" : !!s && s.role !== "head";
   if (!ok) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const url = req.nextUrl.clone();
-    url.pathname = "/admin/login";
+    url.pathname = isHeadArea ? "/s/login" : "/admin/login";
     url.search = "";
     return NextResponse.redirect(url);
   }
@@ -27,5 +29,5 @@ function withNoIndex(res: NextResponse) {
 }
 
 export const config = {
-  matcher: ["/admin", "/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin", "/admin/:path*", "/api/admin/:path*", "/s", "/s/:path*"],
 };
