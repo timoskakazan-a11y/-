@@ -8,8 +8,19 @@ function secret() {
   return s;
 }
 
+/**
+ * IP посетителя. Если сайт стоит за Cloudflare, Vercel видит адрес Cloudflare,
+ * а настоящий лежит в CF-Connecting-IP. Этому заголовку верим только когда
+ * Cloudflare приложил наш секрет (правило в Cloudflare добавляет заголовок
+ * x-ig71-proxy = PROXY_SECRET), иначе его мог бы подделать кто угодно.
+ */
 export async function clientIp(): Promise<string> {
   const h = await headers();
+  const proxySecret = process.env.PROXY_SECRET;
+  const cfIp = h.get("cf-connecting-ip");
+  if (proxySecret && proxySecret.length >= 16 && cfIp && safeEqual(h.get("x-ig71-proxy") ?? "", proxySecret)) {
+    return cfIp.trim();
+  }
   return (
     h.get("x-real-ip") ||
     h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
