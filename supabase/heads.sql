@@ -98,6 +98,26 @@ begin
   end loop;
 end $$;
 
+-- Замена строк отчёта (вызывается из save_class_report в той же транзакции)
+create or replace function public.report_replace_items(r uuid, p_items jsonb) returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from public.report_items where report_id = r;
+  insert into public.report_items (report_id, position, event_date, title, participants, note, event_id)
+  select r, (x.ord - 1)::int,
+         (x.item->>'event_date')::date,
+         left(btrim(x.item->>'title'), 200),
+         (x.item->>'participants')::int,
+         left(coalesce(x.item->>'note', ''), 500),
+         nullif(x.item->>'event_id', '')::uuid
+    from jsonb_array_elements(p_items) with ordinality as x(item, ord);
+end;
+$$;
+revoke all on function public.report_replace_items(uuid, jsonb) from public, anon, authenticated;
+
 -- Сохранение отчёта целиком, атомарно.
 -- Проверяет, что период открыт и срок не прошёл, и что отчёт никто не
 -- изменил с момента, когда староста его загрузил (p_expected).
@@ -144,15 +164,7 @@ begin
     returning * into v_report;
   end if;
 
-  delete from public.report_items where report_id = v_report.id;
-  insert into public.report_items (report_id, position, event_date, title, participants, note, event_id)
-  select v_report.id, (x.ord - 1)::int,
-         (x.item->>'event_date')::date,
-         left(btrim(x.item->>'title'), 200),
-         (x.item->>'participants')::int,
-         left(coalesce(x.item->>'note', ''), 500),
-         nullif(x.item->>'event_id', '')::uuid
-    from jsonb_array_elements(p_items) with ordinality as x(item, ord);
+  perform public.report_replace_items(v_report.id, p_items);
 
   return jsonb_build_object('status', 'ok', 'updated_at', v_report.updated_at);
 end;
