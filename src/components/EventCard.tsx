@@ -1,22 +1,30 @@
 import type { EventItem } from "@/lib/data";
 import { safeUrl } from "@/lib/format";
 import { Icon } from "./Icon";
+import { Shape, lookFor } from "./Shape";
 
 const TZ = "Europe/Moscow";
 
+export function eventDate(iso: string) {
+  const d = new Date(iso);
+  return {
+    day: d.toLocaleDateString("ru-RU", { day: "numeric", timeZone: TZ }),
+    month: d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", timeZone: TZ }).replace(/^\d+\s/, ""),
+    weekday: d.toLocaleDateString("ru-RU", { weekday: "long", timeZone: TZ }),
+    time: d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", timeZone: TZ }),
+  };
+}
+
 export function EventCard({ e }: { e: EventItem }) {
-  const d = new Date(e.starts_at);
-  const day = d.toLocaleDateString("ru-RU", { day: "numeric", timeZone: TZ });
-  const month = d.toLocaleDateString("ru-RU", { month: "long", timeZone: TZ });
-  const monthShort = d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", timeZone: TZ }).replace(/^\d+\s/, "");
-  const weekday = d.toLocaleDateString("ru-RU", { weekday: "long", timeZone: TZ });
-  const time = d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
+  const { day, month, weekday, time } = eventDate(e.starts_at);
+  const look = lookFor(e.id);
   const link = safeUrl(e.link_url);
   return (
     <article className="pf-event">
-      <div className="pf-event-date" aria-label={`${day} ${monthShort}`}>
+      <div className={`pf-event-date ${look.color}`} aria-label={`${day} ${month}`}>
+        <Shape name={look.shape} className="pf-event-shape" size={88} />
         <b>{day}</b>
-        <span>{monthShort || month}</span>
+        <span>{month}</span>
       </div>
       <div className="pf-event-body">
         <span className="pf-label">{weekday}</span>

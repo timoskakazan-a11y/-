@@ -8,7 +8,7 @@ export function Header() {
     <header className="pf-header">
       <div className="container pf-header-in">
         <Link href="/" className="pf-brand" aria-label={site.name}>
-          <LogoMark height={42} />
+          <LogoMark height={42} bg="#F4F2EE" fg="#16161B" />
           <span className="pf-brand-text">
             <b>Инициативная группа</b>
             <span>школы №71 · Казань</span>

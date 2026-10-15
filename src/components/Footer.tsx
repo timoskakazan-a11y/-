@@ -8,7 +8,7 @@ export function Footer() {
       <div className="container">
         <div className="pf-footer-grid">
           <div className="pf-footer-brand">
-            <LogoMark height={52} bg="#FFFFFF" fg="#0B1533" />
+            <LogoMark height={52} bg="#F4F2EE" fg="#16161B" />
             <p>Инициативная группа школы №71.<br />Ученики, которые делают школьную жизнь заметной.</p>
           </div>
           <div>

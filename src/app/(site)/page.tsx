@@ -1,58 +1,87 @@
 import Link from "next/link";
-import { getAlbums, getUpcomingEvents } from "@/lib/data";
-import { EventCard } from "@/components/EventCard";
+import { getAlbums, getUpcomingEvents, type EventItem } from "@/lib/data";
+import { EventCard, eventDate } from "@/components/EventCard";
 import { AlbumCard } from "@/components/AlbumCard";
 import { Unavailable } from "@/components/Unavailable";
 import { Icon } from "@/components/Icon";
-import { LogoFull } from "@/components/Logo";
-import { Directions, JoinBanner } from "@/components/Sections";
+import { Shape, lookFor } from "@/components/Shape";
+import { JoinBanner, Tags } from "@/components/Sections";
+import { plural } from "@/components/FormListItem";
 
 export const revalidate = 60;
 
+function EventTile({ e, n }: { e: EventItem; n: number }) {
+  const { day, month, time } = eventDate(e.starts_at);
+  const look = lookFor(e.id, n);
+  return (
+    <Link href="/events" className={`ig-tile ${look.color}`}>
+      <Shape name={look.shape} className="ig-tile-shape" size={170} />
+      <span className="ig-tile-label">Событие</span>
+      <h3>{e.title}</h3>
+      <span className="ig-tile-meta">{day} {month} · {time}{e.location ? ` · ${e.location}` : ""}</span>
+    </Link>
+  );
+}
+
 export default async function Home() {
-  const [events, albums] = await Promise.all([getUpcomingEvents(4), getAlbums(8)]);
+  const [events, albums] = await Promise.all([getUpcomingEvents(50), getAlbums(100)]);
+  const ev = events ?? [];
+  const al = albums ?? [];
 
   return (
     <>
       <div className="container">
-        <section className="pf-hero">
-          <div className="pf-hero-text">
-            <span className="pf-eyebrow">Школа №71 · Казань</span>
-            <h1>Инициативная группа&nbsp;71</h1>
-            <p>Придумываем и проводим школьные события, снимаем праздники, ведём соцсети и собираем музыку для дискотек.</p>
-            <div className="pf-hero-actions">
-              <Link href="/events" className="pf-btn pf-btn-white">Ближайшие события</Link>
-              <Link href="/about" className="pf-btn pf-btn-outline-white">О команде</Link>
-            </div>
+        <section className="ig-hero">
+          <span className="ig-eyebrow">Инициативная группа школы №71 · Казань</span>
+          <h1 className="ig-headline">
+            <span className="ig-line">Делаем <span className="ig-chip ig-blue ig-chip-wide" aria-hidden><Shape name="flower" size="0.5em" /><Shape name="petals" size="0.5em" /><Shape name="half" size="0.5em" /></span></span>{" "}
+            <span className="ig-line"><span className="ig-chip ig-mint" aria-hidden><Shape name="star" size="0.5em" /></span> школу</span>{" "}
+            <span className="ig-line">ярче <span className="ig-chip ig-yellow" aria-hidden><Shape name="ring" size="0.5em" /></span></span>
+          </h1>
+          <p className="ig-lead">Придумываем и проводим школьные события, снимаем праздники, ведём соцсети и собираем музыку для дискотек.</p>
+        </section>
+
+        <section className="ig-bento" aria-label="Коротко">
+          {ev[0] && <EventTile e={ev[0]} n={0} />}
+          <Link href="/events" className="ig-tile ig-blue ig-stat">
+            <Shape name="burst" className="ig-tile-shape" size={170} />
+            <span className="ig-tile-label">Афиша</span>
+            <b>{ev.length}</b>
+            <span>{plural(ev.length, "событие", "события", "событий")} впереди</span>
+          </Link>
+          {ev[1] && <EventTile e={ev[1]} n={1} />}
+          <Link href="/albums" className="ig-tile ig-pink ig-stat">
+            <Shape name="petals" className="ig-tile-shape" size={170} />
+            <span className="ig-tile-label">Фотоархив</span>
+            <b>{al.length}</b>
+            <span>{plural(al.length, "альбом", "альбома", "альбомов")}</span>
+          </Link>
+          <div className="ig-tile ig-outline ig-wide">
+            <span className="ig-tile-label">Чем занимаемся</span>
+            <Tags />
           </div>
-          <div className="pf-hero-art" aria-hidden>
-            <LogoFull height={300} bg="#FFFFFF" fg="#2150F5" />
-          </div>
+          <Link href="/about#join" className="ig-tile ig-cream ig-wide ig-cta">
+            <Shape name="flower" className="ig-tile-shape" size={220} />
+            <span className="ig-tile-label">Команда</span>
+            <h3>Хочешь с нами?</h3>
+            <span className="ig-tile-go">Как вступить <Icon name="arrowRight" size={18} /></span>
+          </Link>
         </section>
       </div>
 
       <section className="pf-section">
         <div className="container">
           <div className="pf-section-head">
-            <h2>Ближайшие события</h2>
+            <h2>Афиша</h2>
             <Link href="/events" className="pf-link">Все события <Icon name="arrowRight" size={18} /></Link>
           </div>
           {events === null ? (
             <Unavailable />
-          ) : events.length === 0 ? (
+          ) : ev.length === 0 ? (
             <div className="pf-empty"><Icon name="calendar" size={28} /><p>Скоро здесь появятся новые события</p></div>
           ) : (
-            <div className="pf-events">{events.map((e) => <EventCard key={e.id} e={e} />)}</div>
+            <div className="pf-events">{ev.slice(0, 4).map((e) => <EventCard key={e.id} e={e} />)}</div>
           )}
-        </div>
-      </section>
-
-      <section className="pf-section pf-section-tint">
-        <div className="container">
-          <div className="pf-section-head">
-            <h2>Чем мы занимаемся</h2>
-          </div>
-          <Directions />
         </div>
       </section>
 
@@ -64,10 +93,10 @@ export default async function Home() {
           </div>
           {albums === null ? (
             <Unavailable />
-          ) : albums.length === 0 ? (
+          ) : al.length === 0 ? (
             <div className="pf-empty"><Icon name="image" size={28} /><p>Альбомы скоро появятся</p></div>
           ) : (
-            <div className="pf-albums">{albums.map((a) => <AlbumCard key={a.id} a={a} />)}</div>
+            <div className="pf-albums">{al.slice(0, 8).map((a) => <AlbumCard key={a.id} a={a} />)}</div>
           )}
         </div>
       </section>

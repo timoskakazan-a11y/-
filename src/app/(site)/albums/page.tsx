@@ -12,7 +12,7 @@ export default async function AlbumsPage() {
   const albums = await getAlbums();
   return (
     <>
-      <PageHead title="Фотоархив" lead="Фотографии с мероприятий. Альбомы открываются во ВКонтакте." />
+      <PageHead shape="flower" color="ig-pink" title="Фотоархив" lead="Фотографии с мероприятий. Альбомы открываются во ВКонтакте." />
       <div className="container" style={{ paddingBottom: 80 }}>
       <div>
         {albums === null ? (

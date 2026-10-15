@@ -12,7 +12,7 @@ export default async function EventsPage() {
   const events = await getUpcomingEvents();
   return (
     <>
-      <PageHead title="События" lead="Ближайшие события школы. Приходите — будет интересно." />
+      <PageHead shape="burst" color="ig-yellow" title="События" lead="Ближайшие события школы. Приходите — будет интересно." />
       <div className="container" style={{ paddingBottom: 80 }}>
       <div>
         {events === null ? (

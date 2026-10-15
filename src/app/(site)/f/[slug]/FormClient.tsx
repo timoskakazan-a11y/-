@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { maxLen, validateAnswers, type Answers, type FormField, type PublicForm } from "@/lib/forms";
-import { Icon, type IconName } from "@/components/Icon";
+import { Icon } from "@/components/Icon";
+import { Shape, type ShapeName } from "@/components/Shape";
 
 type Phase = "idle" | "sending" | "retrying" | "offline" | "done";
 
@@ -138,7 +139,6 @@ export function FormClient({ form }: { form: PublicForm }) {
   }
 
   const tile = tileFor(form.slug);
-  const icon: IconName = /песн|дискот|музык|трек|плейл/i.test(form.title) ? "music" : /фото|сним|видео/i.test(form.title) ? "camera" : "asterisk";
 
   if (phase === "done") {
     return (
@@ -167,7 +167,7 @@ export function FormClient({ form }: { form: PublicForm }) {
         </div>
         <h1 className="fx-title">{form.title}</h1>
         {form.description && <p className="fx-desc">{form.description}</p>}
-        <span className="fx-hero-icon" aria-hidden><Icon name={icon} size={56} weight={3} /></span>
+        <Shape name={shapeFor(form.slug)} className="fx-hero-shape" size={220} />
       </header>
 
       {/* Скрытое поле-ловушка для ботов */}
@@ -204,7 +204,9 @@ export function FormClient({ form }: { form: PublicForm }) {
   );
 }
 
-const TILES = ["tile-yellow", "tile-sky", "tile-lilac", "tile-pink", "tile-mint", "tile-blue"];
+const SHAPES: ShapeName[] = ["burst", "flower", "bolt", "petals", "star", "ring"];
+function shapeFor(slug: string) { let h = 7; for (const ch of slug) h = (h * 17 + ch.charCodeAt(0)) | 0; return SHAPES[Math.abs(h) % SHAPES.length]; }
+const TILES = ["ig-yellow", "ig-cream", "ig-mint", "ig-pink", "ig-sky"];
 function tileFor(slug: string) {
   let h = 0;
   for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;

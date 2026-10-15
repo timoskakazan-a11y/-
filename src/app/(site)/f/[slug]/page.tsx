@@ -27,7 +27,7 @@ export default async function FormPage({ params }: Props) {
     <div className="fx-page"><div className="container narrow" style={{ maxWidth: 600 }}>
       {r.status === "ok" && <FormClient form={r.form} />}
       {r.status === "closed" && (
-        <div className="fx-hero tile-lilac fx-done">
+        <div className="fx-hero ig-sky fx-done">
           <span className="fx-done-icon"><Icon name="lock" size={30} weight={2.6} /></span>
           <h1 className="fx-title">{r.title}</h1>
           <p className="fx-desc">Приём ответов на эту форму закрыт</p>
@@ -35,7 +35,7 @@ export default async function FormPage({ params }: Props) {
         </div>
       )}
       {r.status === "error" && (
-        <div className="fx-hero tile-pink fx-done">
+        <div className="fx-hero ig-pink fx-done">
           <span className="fx-done-icon"><Icon name="x" size={30} weight={2.8} /></span>
           <h1 className="fx-title">Не удалось загрузить форму</h1>
           <p className="fx-desc">Похоже, сбой связи. Попробуйте обновить страницу.</p>
