@@ -1,31 +1,34 @@
 import type { EventItem } from "@/lib/data";
 import { safeUrl } from "@/lib/format";
-import { colorFor } from "@/lib/palette";
+import { Icon } from "./Icon";
 
 const TZ = "Europe/Moscow";
 
 export function EventCard({ e }: { e: EventItem }) {
   const d = new Date(e.starts_at);
   const day = d.toLocaleDateString("ru-RU", { day: "numeric", timeZone: TZ });
-  const month = d.toLocaleDateString("ru-RU", { month: "short", timeZone: TZ }).replace(".", "");
-  const when = d.toLocaleString("ru-RU", { weekday: "short", hour: "2-digit", minute: "2-digit", timeZone: TZ });
+  const month = d.toLocaleDateString("ru-RU", { month: "long", timeZone: TZ });
+  const monthShort = d.toLocaleDateString("ru-RU", { day: "numeric", month: "long", timeZone: TZ }).replace(/^\d+\s/, "");
+  const weekday = d.toLocaleDateString("ru-RU", { weekday: "long", timeZone: TZ });
+  const time = d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
   const link = safeUrl(e.link_url);
   return (
-    <article className="event">
-      <div className={`event-date ${colorFor(e.id)}`} aria-hidden>
+    <article className="pf-event">
+      <div className="pf-event-date" aria-label={`${day} ${monthShort}`}>
         <b>{day}</b>
-        <span>{month}</span>
+        <span>{monthShort || month}</span>
       </div>
-      <div className="event-body">
+      <div className="pf-event-body">
+        <span className="pf-label">{weekday}</span>
         <h3>{e.title}</h3>
-        <div className="event-meta">
-          {when.charAt(0).toUpperCase() + when.slice(1)}
-          {e.location ? ` · ${e.location}` : ""}
-        </div>
-        {e.description && <p>{e.description}</p>}
+        <ul className="pf-meta">
+          <li><Icon name="clock" size={16} /> {time}</li>
+          {e.location && <li><Icon name="pin" size={16} /> {e.location}</li>}
+        </ul>
+        {e.description && <p className="pf-event-desc">{e.description}</p>}
         {link && (
-          <a className="link" href={link} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: 8, fontSize: 15 }}>
-            Подробнее
+          <a className="pf-more" href={link} target="_blank" rel="noopener noreferrer">
+            Подробнее <Icon name="arrowRight" size={16} />
           </a>
         )}
       </div>
